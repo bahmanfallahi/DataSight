@@ -15,6 +15,15 @@ const chartConfig = {
   value: { label: 'Value', color: 'hsl(var(--chart-2))' },
 };
 
+function formatNumber(num: number): string {
+    if (Math.abs(num) < 1000) {
+      // For smaller numbers, show one decimal place if not an integer
+      return num.toFixed(Number.isInteger(num) ? 0 : 1);
+    }
+    // For larger numbers, use locale string for thousands separators
+    return num.toLocaleString(undefined, { maximumFractionDigits: 0 });
+  }
+
 export default function Visualizer({ parsedData, columnAnalysis }: { parsedData: ParsedData; columnAnalysis: ColumnAnalysis[] }) {
   const [activeTab, setActiveTab] = useState('distribution');
   
@@ -45,6 +54,7 @@ export default function Visualizer({ parsedData, columnAnalysis }: { parsedData:
 
     if (colType === 'numeric') {
         const values = parsedData.data.map(row => Number(row[distCol])).filter(v => !isNaN(v));
+        if (values.length === 0) return [];
         const min = Math.min(...values);
         const max = Math.max(...values);
         const binSize = (max-min) / binCount[0];
@@ -54,10 +64,14 @@ export default function Visualizer({ parsedData, columnAnalysis }: { parsedData:
             if (binIndex === binCount[0]) binIndex--;
             bins[binIndex]++;
         });
-        return bins.map((count, i) => ({
-            name: `${(min + i * binSize).toFixed(1)}-${(min + (i+1) * binSize).toFixed(1)}`,
-            count
-        }))
+        return bins.map((count, i) => {
+            const start = min + i * binSize;
+            const end = min + (i + 1) * binSize;
+            return {
+                name: `${formatNumber(start)}-${formatNumber(end)}`,
+                count
+            }
+        });
     }
     return [];
   }, [distCol, parsedData, columnAnalysis, binCount]);
