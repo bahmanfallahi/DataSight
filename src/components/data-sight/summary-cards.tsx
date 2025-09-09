@@ -1,7 +1,7 @@
 'use client';
 import { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, CalendarRange, Columns } from 'lucide-react';
+import { Table, CalendarRange, Columns, DollarSign } from 'lucide-react';
 import type { ParsedData, ColumnAnalysis } from '@/lib/data-utils';
 
 interface SummaryCardsProps {
@@ -9,21 +9,56 @@ interface SummaryCardsProps {
   columnAnalysis: ColumnAnalysis[];
 }
 
+const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(value);
+  };
+
 export default function SummaryCards({ parsedData, columnAnalysis }: SummaryCardsProps) {
-  const { earliestDate, latestDate } = useMemo(() => {
-    let earliest: string | null = null;
-    let latest: string | null = null;
-    columnAnalysis
-      .filter(c => c.type === 'date')
-      .forEach(c => {
-        if (!earliest || c.stats.earliest < earliest) earliest = c.stats.earliest;
-        if (!latest || c.stats.latest > latest) latest = c.stats.latest;
-      });
-    return { earliestDate: earliest, latestDate: latest };
-  }, [columnAnalysis]);
+    const { earliestDate, latestDate, modemCosts, fiberCosts } = useMemo(() => {
+        let earliest: string | null = null;
+        let latest: string | null = null;
+        let modemTotal = 0;
+        let fiberTotal = 0;
+
+        columnAnalysis
+        .filter(c => c.type === 'date')
+        .forEach(c => {
+            if (!earliest || c.stats.earliest < earliest) earliest = c.stats.earliest;
+            if (!latest || c.stats.latest > latest) latest = c.stats.latest;
+        });
+
+        const modemCostHeader = parsedData.headers.find(h => h.toLowerCase() === 'column6');
+        const fiberCostHeader = parsedData.headers.find(h => h.toLowerCase() === 'column7');
+
+        if (modemCostHeader) {
+            modemTotal = parsedData.data.reduce((sum, row) => {
+                const value = parseFloat(row[modemCostHeader]);
+                return sum + (isNaN(value) ? 0 : value);
+            }, 0);
+        }
+
+        if (fiberCostHeader) {
+            fiberTotal = parsedData.data.reduce((sum, row) => {
+                const value = parseFloat(row[fiberCostHeader]);
+                return sum + (isNaN(value) ? 0 : value);
+            }, 0);
+        }
+
+        return { 
+            earliestDate: earliest, 
+            latestDate: latest,
+            modemCosts: modemCostHeader ? modemTotal : null,
+            fiberCosts: fiberCostHeader ? fiberTotal : null
+        };
+    }, [parsedData, columnAnalysis]);
 
   return (
-    <div className="grid gap-4 md:grid-cols-3">
+    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Total Rows</CardTitle>
@@ -44,6 +79,30 @@ export default function SummaryCards({ parsedData, columnAnalysis }: SummaryCard
           <p className="text-xs text-muted-foreground">features analyzed</p>
         </CardContent>
       </Card>
+      {modemCosts !== null && (
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Modem Costs</CardTitle>
+            <DollarSign className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{formatCurrency(modemCosts)}</div>
+            <p className="text-xs text-muted-foreground">Sum of Column6</p>
+          </CardContent>
+        </Card>
+      )}
+      {fiberCosts !== null && (
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Fiber Costs</CardTitle>
+            <DollarSign className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{formatCurrency(fiberCosts)}</div>
+            <p className="text-xs text-muted-foreground">Sum of Column7</p>
+          </CardContent>
+        </Card>
+      )}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Date Range</CardTitle>
