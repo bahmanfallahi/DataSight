@@ -55,15 +55,27 @@ export default function Visualizer({ parsedData, columnAnalysis }: { parsedData:
     if (colType === 'numeric') {
         const values = parsedData.data.map(row => Number(row[distCol])).filter(v => !isNaN(v));
         if (values.length === 0) return [];
-        const min = Math.min(...values);
-        const max = Math.max(...values);
-        const binSize = (max-min) / binCount[0];
+        
+        const colStats = columnAnalysis.find(c => c.name === distCol)?.stats;
+        const min = colStats?.min ?? Math.min(...values);
+        const max = colStats?.max ?? Math.max(...values);
+        
+        if (min === max) {
+            return [{ name: formatNumber(min), count: values.length }];
+        }
+
+        const binSize = (max - min) / binCount[0];
+        if (binSize <= 0) return [];
+
         const bins = Array.from({length: binCount[0]}, () => 0);
+        
         values.forEach(v => {
             let binIndex = Math.floor((v - min) / binSize);
-            if (binIndex === binCount[0]) binIndex--;
+            if (binIndex >= binCount[0]) binIndex = binCount[0] - 1;
+            if (binIndex < 0) binIndex = 0;
             bins[binIndex]++;
         });
+        
         return bins.map((count, i) => {
             const start = min + i * binSize;
             const end = min + (i + 1) * binSize;
@@ -146,8 +158,8 @@ export default function Visualizer({ parsedData, columnAnalysis }: { parsedData:
                 <ChartContainer config={{}} className="h-[250px] w-full">
                     <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
                         <CartesianGrid />
-                        <XAxis type="number" dataKey="x" name={scatterX} unit="" tick={{ fontSize: 12 }} />
-                        <YAxis type="number" dataKey="y" name={scatterY} unit="" tick={{ fontSize: 12 }} />
+                        <XAxis type="number" dataKey="x" name={scatterX} unit="" tick={{ fontSize: 12 }} tickFormatter={formatNumber} />
+                        <YAxis type="number" dataKey="y" name={scatterY} unit="" tick={{ fontSize: 12 }} tickFormatter={formatNumber} />
                         <RechartsTooltip cursor={{ strokeDasharray: '3 3' }} />
                         <Scatter name="Sales Data" data={scatterData} fill="var(--color-value)" />
                     </ScatterChart>
@@ -170,14 +182,14 @@ export default function Visualizer({ parsedData, columnAnalysis }: { parsedData:
                     <LineChart data={timeSeriesData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
                         <CartesianGrid vertical={false} />
                         <XAxis dataKey="date" tickFormatter={(d) => new Date(d).toLocaleDateString()} type="number" domain={['dataMin', 'dataMax']} tick={{ fontSize: 12 }} />
-                        <YAxis tick={{ fontSize: 12 }} />
+                        <YAxis tick={{ fontSize: 12 }} tickFormatter={formatNumber}/>
                         <RechartsTooltip 
                             content={({ active, payload, label }) => {
                                 if (active && payload && payload.length) {
                                 return (
                                     <div className="p-2 border rounded-lg bg-background/80">
                                     <p className="font-bold">{new Date(label).toLocaleDateString()}</p>
-                                    <p className="text-sm" style={{ color: "var(--color-value)" }}>{`${timeSeriesValue}: ${payload[0].value}`}</p>
+                                    <p className="text-sm" style={{ color: "var(--color-value)" }}>{`${timeSeriesValue}: ${formatNumber(payload[0].value as number)}`}</p>
                                     </div>
                                 );
                                 }

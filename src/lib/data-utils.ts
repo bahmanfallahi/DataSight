@@ -46,13 +46,14 @@ function detectColumnType(values: any[]): ColumnType {
     if (!isNaN(Number(v)) && v.trim() !== '') {
       numericCount++;
     }
-    if (!isNaN(new Date(v).getTime()) && v.length > 4) { // Avoid treating years like '2023' as dates
+    if (!isNaN(new Date(v).getTime()) && v.length > 4 && /[a-zA-Z]/.test(v)) { // More robust date check
         dateCount++;
     }
   }
 
-  if (numericCount / nonNullValues.length > 0.8) return 'numeric';
   if (dateCount / nonNullValues.length > 0.8) return 'date';
+  if (numericCount / nonNullValues.length > 0.8) return 'numeric';
+
 
   return 'categorical';
 }
@@ -71,13 +72,15 @@ export function analyzeColumns(data: Record<string, any>[], headers: string[]): 
     stats.missing = values.length - nonNullValues.length;
 
     if (type === 'numeric' && nonNullValues.length > 0) {
-      const numericValues = nonNullValues.map(Number);
-      stats.min = Math.min(...numericValues);
-      stats.max = Math.max(...numericValues);
-      const sum = numericValues.reduce((a, b) => a + b, 0);
-      stats.mean = sum / numericValues.length;
-      const variance = numericValues.reduce((sq, n) => sq + Math.pow(n - stats.mean, 2), 0) / numericValues.length;
-      stats.stdDev = Math.sqrt(variance);
+      const numericValues = nonNullValues.map(Number).filter(n => !isNaN(n));
+      if (numericValues.length > 0) {
+        stats.min = Math.min(...numericValues);
+        stats.max = Math.max(...numericValues);
+        const sum = numericValues.reduce((a, b) => a + b, 0);
+        stats.mean = sum / numericValues.length;
+        const variance = numericValues.reduce((sq, n) => sq + Math.pow(n - stats.mean, 2), 0) / numericValues.length;
+        stats.stdDev = Math.sqrt(variance);
+      }
     } else if (type === 'date' && nonNullValues.length > 0) {
       const dateValues = nonNullValues.map(v => new Date(v).getTime()).filter(t => !isNaN(t));
       if (dateValues.length > 0) {
