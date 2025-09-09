@@ -1,3 +1,4 @@
+
 export interface ParsedData {
   headers: string[];
   data: Record<string, any>[];
@@ -17,12 +18,17 @@ export interface ColumnAnalysis {
  */
 export function parseCSV(csvText: string): ParsedData {
   const lines = csvText.trim().split('\n');
-  const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, ''));
+  const allHeaders = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, ''));
+  
+  // Keep track of original indices to map data correctly
+  const headerMap = allHeaders.map((header, index) => ({ header, index })).filter(h => h.header !== '');
+  const headers = headerMap.map(h => h.header);
+
   const data = lines.slice(1).map(line => {
     // Simple regex to split by comma, but not inside quotes
     const values = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
     const row: Record<string, any> = {};
-    headers.forEach((header, index) => {
+    headerMap.forEach(({ header, index }) => {
       const value = values[index]?.trim().replace(/^"|"$/g, '') || '';
       row[header] = value;
     });
