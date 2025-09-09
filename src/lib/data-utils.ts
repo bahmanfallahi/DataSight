@@ -70,7 +70,7 @@ export function analyzeColumns(data: Record<string, any>[], headers: string[]): 
     stats.count = nonNullValues.length;
     stats.missing = values.length - nonNullValues.length;
 
-    if (type === 'numeric') {
+    if (type === 'numeric' && nonNullValues.length > 0) {
       const numericValues = nonNullValues.map(Number);
       stats.min = Math.min(...numericValues);
       stats.max = Math.max(...numericValues);
@@ -78,10 +78,12 @@ export function analyzeColumns(data: Record<string, any>[], headers: string[]): 
       stats.mean = sum / numericValues.length;
       const variance = numericValues.reduce((sq, n) => sq + Math.pow(n - stats.mean, 2), 0) / numericValues.length;
       stats.stdDev = Math.sqrt(variance);
-    } else if (type === 'date') {
-      const dateValues = nonNullValues.map(v => new Date(v).getTime());
-      stats.earliest = new Date(Math.min(...dateValues)).toISOString().split('T')[0];
-      stats.latest = new Date(Math.max(...dateValues)).toISOString().split('T')[0];
+    } else if (type === 'date' && nonNullValues.length > 0) {
+      const dateValues = nonNullValues.map(v => new Date(v).getTime()).filter(t => !isNaN(t));
+      if (dateValues.length > 0) {
+        stats.earliest = new Date(Math.min(...dateValues)).toISOString().split('T')[0];
+        stats.latest = new Date(Math.max(...dateValues)).toISOString().split('T')[0];
+      }
     } else if (type === 'categorical') {
       const uniqueValues = new Set(nonNullValues);
       stats.uniqueCount = uniqueValues.size;
