@@ -30,12 +30,25 @@ const analyzeSalesTrendsPrompt = ai.definePrompt({
   name: 'analyzeSalesTrendsPrompt',
   input: {schema: AnalyzeSalesTrendsInputSchema},
   output: {schema: AnalyzeSalesTrendsOutputSchema},
-  prompt: `You are an expert data analyst with a deep understanding of sales trends and patterns.
+  prompt: `
+  You are an expert data analyst, and your response MUST be in Persian.
+  Your goal is to analyze the provided sales data and generate a formal report that can be presented to a senior manager.
 
-  Analyze the following sales data provided in CSV format to identify key trends, seasonal variations, and correlations between different data columns. Provide a concise and informative summary of your findings. Focus on actionable insights that can help improve sales performance. If the CSV data has dates, be sure to consider how sales change over time.
+  The analysis should be based ENTIRELY on the data from the CSV file. Perform a monthly analysis covering the following points:
+  - Which expert was most effective?
+  - Which introduction channel had the most feedback?
+  - Which day of the week had the most sales?
+  - Which week of the month had the weakest sales?
+  - Identify any other significant patterns or insights from the data.
+
+  Here are some crucial details about interpreting the data:
+  - In column 4, a value of "Free" means the customer was exempted from a 1,650,000 Toman fee for fiber extraction.
+  - In column 4, a value of "Have" also means the customer already had fiber and was exempt from the fee. These should not be counted in the total fiber extraction calculations.
+  - Your final report should be well-structured, clear, and professional.
 
   CSV Data:
-  {{csvData}}`,
+  {{csvData}}
+  `,
 });
 
 const analyzeSalesTrendsFlow = ai.defineFlow(
