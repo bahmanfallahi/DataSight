@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
-import { Sparkles, Loader2 } from 'lucide-react';
+import { Sparkles, Loader2, Copy, Check } from 'lucide-react';
 
 interface AiAnalysisProps {
   csvData: string;
@@ -15,6 +15,7 @@ interface AiAnalysisProps {
 export default function AiAnalysis({ csvData }: AiAnalysisProps) {
   const [analysis, setAnalysis] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isCopied, setIsCopied] = useState(false);
   const { toast } = useToast();
 
   const handleAnalyze = async () => {
@@ -35,6 +36,51 @@ export default function AiAnalysis({ csvData }: AiAnalysisProps) {
     }
   };
 
+  const handleCopy = () => {
+    if (!analysis) return;
+    navigator.clipboard.writeText(analysis);
+    setIsCopied(true);
+    setTimeout(() => setIsCopied(false), 2000); // Reset after 2 seconds
+    toast({
+      title: 'Copied to Clipboard',
+      description: 'The AI analysis has been copied.',
+    });
+  };
+
+  const renderButton = () => {
+    if (isLoading) {
+      return (
+        <Button disabled className="mt-4 w-full">
+          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          Analyzing...
+        </Button>
+      );
+    }
+    if (analysis) {
+      return (
+        <Button onClick={handleCopy} className="mt-4 w-full">
+          {isCopied ? (
+            <>
+              <Check className="mr-2 h-4 w-4" />
+              Copied!
+            </>
+          ) : (
+            <>
+              <Copy className="mr-2 h-4 w-4" />
+              Copy Analysis
+            </>
+          )}
+        </Button>
+      );
+    }
+    return (
+      <Button onClick={handleAnalyze} className="mt-4 w-full">
+        <Sparkles className="mr-2 h-4 w-4" />
+        Analyze Sales Trends
+      </Button>
+    );
+  }
+
   return (
     <Card className="h-full flex flex-col">
       <CardHeader>
@@ -47,7 +93,7 @@ export default function AiAnalysis({ csvData }: AiAnalysisProps) {
         </CardDescription>
       </CardHeader>
       <CardContent className="flex-grow flex flex-col">
-        {isLoading ? (
+        {isLoading && !analysis ? (
           <div className="space-y-4 flex-grow">
             <Skeleton className="h-4 w-full" />
             <Skeleton className="h-4 w-full" />
@@ -67,19 +113,7 @@ export default function AiAnalysis({ csvData }: AiAnalysisProps) {
             <p className="text-sm text-muted-foreground">Click the button to generate an AI-powered analysis of your sales data.</p>
           </div>
         )}
-        <Button onClick={handleAnalyze} disabled={isLoading} className="mt-4 w-full">
-          {isLoading ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Analyzing...
-            </>
-          ) : (
-            <>
-              <Sparkles className="mr-2 h-4 w-4" />
-              Analyze Sales Trends
-            </>
-          )}
-        </Button>
+        {renderButton()}
       </CardContent>
     </Card>
   );
