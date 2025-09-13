@@ -13,8 +13,8 @@ const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'USD',
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
     }).format(value);
   };
 
@@ -82,7 +82,7 @@ export default function SummaryCards({ parsedData, columnAnalysis }: SummaryCard
       {modemCosts !== null && (
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Modem Costs</CardTitle>
+            <CardTitle className="text-sm font-medium">Fiber Cost</CardTitle>
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -94,7 +94,7 @@ export default function SummaryCards({ parsedData, columnAnalysis }: SummaryCard
       {fiberCosts !== null && (
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Fiber Costs</CardTitle>
+            <CardTitle className="text-sm font-medium">Total ONT sales</CardTitle>
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
