@@ -50,7 +50,7 @@ const analyzeSalesTrendsPrompt = ai.definePrompt({
   - Your final report should be well-structured, clear, and professional.
 
   CSV Data:
-  {{csvData}}
+  {{{csvData}}}
   `,
 });
 
