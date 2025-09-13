@@ -39,7 +39,9 @@ const analyzeSalesTrendsPrompt = ai.definePrompt({
   - Which introduction channel had the most feedback?
   - Which day of the week had the most sales?
   - Which week of the month had the weakest sales?
+  - Which regions had the highest share and which regions had the lowest share of sales?
   - Identify any other significant patterns or insights from the data.
+  - Your report must be in Gregorian month because the user is Persian-speaking.
 
   Here are some crucial details about interpreting the data:
   - In column 4, a value of "Free" means the customer was exempted from a 1,650,000 Toman fee for fiber extraction.
