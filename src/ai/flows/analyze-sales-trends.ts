@@ -41,7 +41,8 @@ const analyzeSalesTrendsPrompt = ai.definePrompt({
   - Which week of the month had the weakest sales?
   - Which regions had the highest share and which regions had the lowest share of sales?
   - Identify any other significant patterns or insights from the data.
-  - Your report must be in Gregorian month because the user is Persian-speaking.
+  
+  IMPORTANT: The date format in the data is Solar Hijri (YYYY/MM/DD). Your monthly analysis must use the correct Persian month names. For example, a date like '1404/05/01' is in the month of Mordad (05), not Farvardin (01). Ensure your report accurately reflects the correct Solar month for the data provided.
 
   Here are some crucial details about interpreting the data:
   - In column 4, a value of "Free" means the customer was exempted from a 1,650,000 Toman fee for fiber extraction.
