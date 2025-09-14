@@ -1,7 +1,7 @@
 'use client';
 import { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, Columns, DollarSign, Star } from 'lucide-react';
+import { Table, Columns, DollarSign, Star, Contact } from 'lucide-react';
 import type { ParsedData, ColumnAnalysis } from '@/lib/data-utils';
 
 interface SummaryCardsProps {
@@ -50,11 +50,25 @@ export default function SummaryCards({ parsedData, columnAnalysis }: SummaryCard
                 count: topValueCount
             };
         });
+        
+        // Specifically find the top introduction channel, assuming it's in a column named "Column10"
+        const introChannelCol = columnAnalysis.find(c => c.name.toLowerCase() === 'column10');
+        let topIntroChannel = null;
+        if (introChannelCol && introChannelCol.type === 'categorical') {
+            const topValue = Object.keys(introChannelCol.stats.frequencies)[0];
+            const topValueCount = introChannelCol.stats.frequencies[topValue];
+            topIntroChannel = {
+                value: topValue,
+                count: topValueCount
+            };
+        }
+
 
         return { 
             modemCosts: modemCostHeader ? modemTotal : null,
             fiberCosts: fiberCostHeader ? fiberTotal : null,
-            topCategoricalValues: topValues
+            topCategoricalValues: topValues.filter(v => v.columnName.toLowerCase() !== 'column10'), // Exclude intro channel from generic cards
+            topIntroChannel
         };
     }, [parsedData, columnAnalysis]);
 
@@ -102,6 +116,18 @@ export default function SummaryCards({ parsedData, columnAnalysis }: SummaryCard
             <div className="text-2xl font-bold">{formatCurrency(fiberCosts)}</div>
             <p className="text-xs text-muted-foreground">Sum of Column7</p>
           </CardContent>
+        </Card>
+      )}
+      {topIntroChannel && (
+        <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Top Intro Channel</CardTitle>
+                <Contact className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+                <div className="text-2xl font-bold">{topIntroChannel.value}</div>
+                <p className="text-xs text-muted-foreground">{topIntroChannel.count.toLocaleString()} occurrences</p>
+            </CardContent>
         </Card>
       )}
       {topCategoricalValues.map(item => (
