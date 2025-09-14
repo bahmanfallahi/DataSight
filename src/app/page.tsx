@@ -2,7 +2,7 @@
 
 import { useState, useMemo, ChangeEvent } from 'react';
 import type { ParsedData, ColumnAnalysis } from '@/lib/data-utils';
-import { parseCSV, analyzeColumns } from '@/lib/data-utils';
+import { parseDataFile, analyzeColumns } from '@/lib/data-utils';
 import Dashboard from '@/components/data-sight/dashboard';
 import DataSightLogo from '@/components/data-sight/logo';
 import { Button } from '@/components/ui/button';
@@ -22,11 +22,17 @@ export default function Home() {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    if (file.type !== 'text/csv') {
+    const allowedTypes = [
+      'text/csv',
+      'application/vnd.ms-excel',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    ];
+
+    if (!allowedTypes.includes(file.type)) {
       toast({
         variant: 'destructive',
         title: 'Invalid File Type',
-        description: 'Please upload a .csv file.',
+        description: 'Please upload a CSV or Excel file.',
       });
       return;
     }
@@ -35,14 +41,31 @@ export default function Home() {
     setFileName(file.name);
 
     try {
-      const text = await file.text();
-      const parsed = parseCSV(text);
+      // The raw text is only needed for the AI analysis, we can read it separately
+      // and only for CSV files for simplicity. Excel data will be stringified.
+      let rawDataForAI = '';
+      if (file.type === 'text/csv') {
+        rawDataForAI = await file.text();
+      }
+      
+      const parsed = await parseDataFile(file);
+
+      if (file.type !== 'text/csv') {
+          // For non-CSV files, stringify the parsed data for the AI analysis
+          let csvString = parsed.headers.join(',') + '\n';
+          csvString += parsed.data.map(row => 
+              parsed.headers.map(header => row[header]).join(',')
+          ).join('\n');
+          rawDataForAI = csvString;
+      }
+
+
       if (parsed.data.length === 0) {
-        throw new Error('CSV file is empty or could not be parsed.');
+        throw new Error('File is empty or could not be parsed.');
       }
       const analysis = analyzeColumns(parsed.data, parsed.headers);
 
-      setCsvData(text);
+      setCsvData(rawDataForAI);
       setParsedData(parsed);
       setColumnAnalysis(analysis);
     } catch (error) {
@@ -70,12 +93,12 @@ export default function Home() {
     <div className="w-full max-w-2xl mx-auto">
       <div className="relative border-2 border-dashed border-muted-foreground/50 rounded-xl p-8 text-center transition-colors hover:border-primary/80 hover:bg-card/50">
         <UploadCloud className="mx-auto h-12 w-12 text-muted-foreground" />
-        <h3 className="mt-4 text-lg font-semibold text-foreground">Drag & drop your CSV file</h3>
+        <h3 className="mt-4 text-lg font-semibold text-foreground">Drag & drop your CSV or Excel file</h3>
         <p className="mt-1 text-sm text-muted-foreground">or click to browse</p>
         <Input
           id="file-upload"
           type="file"
-          accept=".csv"
+          accept=".csv, .xlsx, .xls"
           onChange={handleFileUpload}
           className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
           disabled={isLoading}
@@ -109,7 +132,7 @@ export default function Home() {
                 Unlock Insights from Your Sales Data
               </h2>
               <p className="max-w-2xl text-lg text-muted-foreground mb-8">
-                Upload a CSV export from Google Sheets to automatically profile columns, visualize distributions, and analyze trends with AI.
+                Upload a CSV or Excel file to automatically profile columns, visualize distributions, and analyze trends with AI.
               </p>
               {isLoading ? (
                 <div className="flex flex-col items-center gap-4">

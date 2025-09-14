@@ -1,3 +1,4 @@
+import * as XLSX from 'xlsx';
 
 export interface ParsedData {
   headers: string[];
@@ -15,38 +16,37 @@ export interface ColumnAnalysis {
 /**
  * Cleans and normalizes a single value.
  */
-function cleanValue(value: string): any {
-  if (typeof value !== 'string') return value;
+function cleanValue(value: any): any {
+  if (value === null || value === undefined) return '';
 
-  const trimmedValue = value.trim();
-
-  if (trimmedValue.toLowerCase() === 'free' || trimmedValue.toLowerCase() === 'have' || trimmedValue === '-') {
+  const stringValue = String(value).trim();
+  
+  if (stringValue.toLowerCase() === 'free' || stringValue.toLowerCase() === 'have' || stringValue === '-') {
     return 0; // Standardize special categorical values that imply a zero cost
   }
   
   // Remove commas from numbers
-  if (/^\d{1,3}(,\d{3})*(\.\d+)?$/.test(trimmedValue)) {
-    return trimmedValue.replace(/,/g, '');
+  if (/^\d{1,3}(,\d{3})*(\.\d+)?$/.test(stringValue)) {
+    return stringValue.replace(/,/g, '');
   }
 
-  return trimmedValue;
+  return stringValue;
 }
-
 
 /**
  * Parses a CSV string into headers and an array of data objects.
- * Handles quoted fields, commas within quotes, and cleans the data.
  */
-export function parseCSV(csvText: string): ParsedData {
+function parseCSV(csvText: string): ParsedData {
   const lines = csvText.trim().split(/\r\n|\n/);
+  if (lines.length < 1) return { headers: [], data: [] };
+
   const allHeaders = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, ''));
   
-  // Keep track of original indices to map data correctly
   const headerMap = allHeaders.map((header, index) => ({ header, index })).filter(h => h.header !== '');
   const headers = headerMap.map(h => h.header);
 
   const data = lines.slice(1).map(line => {
-    // Regex to split by comma, but not inside quotes
+    if (!line.trim()) return null; // Skip empty lines
     const values = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
     const row: Record<string, any> = {};
     headerMap.forEach(({ header, index }) => {
@@ -54,14 +54,57 @@ export function parseCSV(csvText: string): ParsedData {
       row[header] = cleanValue(rawValue);
     });
     return row;
-  });
+  }).filter(row => row !== null); // Remove null entries from empty lines
 
-  return { headers, data };
+  return { headers, data: data as Record<string, any>[] };
 }
 
 /**
+ * Parses an Excel file buffer into headers and an array of data objects.
+ */
+function parseExcel(buffer: ArrayBuffer): ParsedData {
+    const workbook = XLSX.read(buffer, { type: 'buffer' });
+    const sheetName = workbook.SheetNames[0];
+    const worksheet = workbook.Sheets[sheetName];
+    const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '' });
+
+    if (jsonData.length === 0) return { headers: [], data: [] };
+
+    const allHeaders = (jsonData[0] as string[]).map(h => String(h).trim());
+    
+    const headerMap = allHeaders.map((header, index) => ({ header, index })).filter(h => h.header !== '');
+    const headers = headerMap.map(h => h.header);
+    
+    const data = jsonData.slice(1).map(rowArray => {
+        const row: Record<string, any> = {};
+        headerMap.forEach(({ header, index }) => {
+            const rawValue = (rowArray as any[])[index];
+            row[header] = cleanValue(rawValue);
+        });
+        return row;
+    });
+
+    return { headers, data };
+}
+
+/**
+ * Parses a file based on its type (CSV or Excel).
+ */
+export async function parseDataFile(file: File): Promise<ParsedData> {
+    if (file.type === 'text/csv') {
+        const text = await file.text();
+        return parseCSV(text);
+    } else if (file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' || file.type === 'application/vnd.ms-excel') {
+        const buffer = await file.arrayBuffer();
+        return parseExcel(buffer);
+    } else {
+        throw new Error(`Unsupported file type: ${file.type}`);
+    }
+}
+
+
+/**
  * Detects the type of a column based on its values.
- * Uses a scoring system and prioritizes date detection.
  */
 function detectColumnType(values: any[]): ColumnType {
   const nonNullValues = values.filter(v => v !== null && v !== undefined && v !== '');
@@ -70,36 +113,35 @@ function detectColumnType(values: any[]): ColumnType {
   let numericCount = 0;
   let dateCount = 0;
   
-  // Use a sample for performance on large datasets
   const sample = nonNullValues.slice(0, 100);
 
   for (const v of sample) {
-    // Check for Solar Hijri date format (YYYY/MM/DD)
-    if (typeof v === 'string' && /^\d{4}\/\d{1,2}\/\d{1,2}$/.test(v.trim())) {
-      const parts = v.split('/');
+    const stringV = String(v);
+    if (/^\d{4}\/\d{1,2}\/\d{1,2}$/.test(stringV.trim())) {
+      const parts = stringV.split('/');
       const month = parseInt(parts[1], 10);
       const day = parseInt(parts[2], 10);
       if (month >= 1 && month <= 12 && day >= 1 && day <= 31) {
         dateCount++;
-        continue; // It's a date, no need to check for numeric
+        continue;
       }
     }
 
-    // Check for standard date formats
-    if (!isNaN(new Date(v).getTime()) && String(v).length > 4) {
+    if (!isNaN(new Date(v).getTime()) && String(v).length > 4 && isNaN(Number(v))) {
       dateCount++;
       continue;
     }
 
-    // Check for numeric
     if (!isNaN(Number(v)) && String(v).trim() !== '') {
       numericCount++;
     }
   }
 
   const sampleSize = sample.length;
-  if (dateCount / sampleSize > 0.8) return 'date';
-  if (numericCount / sampleSize > 0.8) return 'numeric';
+  if (sampleSize > 0) {
+    if (dateCount / sampleSize > 0.8) return 'date';
+    if (numericCount / sampleSize > 0.8) return 'numeric';
+  }
 
   return 'categorical';
 }
@@ -129,8 +171,6 @@ export function analyzeColumns(data: Record<string, any>[], headers: string[]): 
         stats.stdDev = Math.sqrt(variance);
       }
     } else if (type === 'date' && nonNullValues.length > 0) {
-      // For Solar Hijri dates, we can't use native Date object for min/max sorting directly
-      // but string comparison works for YYYY/MM/DD format.
       const sortedDates = [...nonNullValues].sort();
       if(sortedDates.length > 0){
         stats.earliest = sortedDates[0];
