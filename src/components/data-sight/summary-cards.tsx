@@ -1,7 +1,7 @@
 'use client';
 import { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, Columns, DollarSign } from 'lucide-react';
+import { Table, Columns, DollarSign, Star } from 'lucide-react';
 import type { ParsedData, ColumnAnalysis } from '@/lib/data-utils';
 
 interface SummaryCardsProps {
@@ -19,7 +19,7 @@ const formatCurrency = (value: number) => {
   };
 
 export default function SummaryCards({ parsedData, columnAnalysis }: SummaryCardsProps) {
-    const { modemCosts, fiberCosts } = useMemo(() => {
+    const { modemCosts, fiberCosts, topCategoricalValues } = useMemo(() => {
         let modemTotal = 0;
         let fiberTotal = 0;
 
@@ -40,11 +40,23 @@ export default function SummaryCards({ parsedData, columnAnalysis }: SummaryCard
             }, 0);
         }
 
+        const categoricalCols = columnAnalysis.filter(c => c.type === 'categorical' && c.stats.uniqueCount > 1 && c.stats.uniqueCount < parsedData.data.length);
+        const topValues = categoricalCols.map(col => {
+            const topValue = Object.keys(col.stats.frequencies)[0];
+            const topValueCount = col.stats.frequencies[topValue];
+            return {
+                columnName: col.name,
+                value: topValue,
+                count: topValueCount
+            };
+        });
+
         return { 
             modemCosts: modemCostHeader ? modemTotal : null,
-            fiberCosts: fiberCostHeader ? fiberTotal : null
+            fiberCosts: fiberCostHeader ? fiberTotal : null,
+            topCategoricalValues: topValues
         };
-    }, [parsedData]);
+    }, [parsedData, columnAnalysis]);
 
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -92,6 +104,18 @@ export default function SummaryCards({ parsedData, columnAnalysis }: SummaryCard
           </CardContent>
         </Card>
       )}
+      {topCategoricalValues.map(item => (
+        <Card key={item.columnName}>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Top {item.columnName}</CardTitle>
+                <Star className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+                <div className="text-2xl font-bold">{item.value}</div>
+                <p className="text-xs text-muted-foreground">{item.count.toLocaleString()} occurrences</p>
+            </CardContent>
+        </Card>
+      ))}
     </div>
   );
 }
