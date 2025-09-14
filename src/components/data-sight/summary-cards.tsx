@@ -1,7 +1,7 @@
 'use client';
 import { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, CalendarRange, Columns, DollarSign } from 'lucide-react';
+import { Table, Columns, DollarSign } from 'lucide-react';
 import type { ParsedData, ColumnAnalysis } from '@/lib/data-utils';
 
 interface SummaryCardsProps {
@@ -19,18 +19,9 @@ const formatCurrency = (value: number) => {
   };
 
 export default function SummaryCards({ parsedData, columnAnalysis }: SummaryCardsProps) {
-    const { earliestDate, latestDate, modemCosts, fiberCosts } = useMemo(() => {
-        let earliest: string | null = null;
-        let latest: string | null = null;
+    const { modemCosts, fiberCosts } = useMemo(() => {
         let modemTotal = 0;
         let fiberTotal = 0;
-
-        columnAnalysis
-        .filter(c => c.type === 'date')
-        .forEach(c => {
-            if (!earliest || c.stats.earliest < earliest) earliest = c.stats.earliest;
-            if (!latest || c.stats.latest > latest) latest = c.stats.latest;
-        });
 
         const modemCostHeader = parsedData.headers.find(h => h.toLowerCase() === 'column6');
         const fiberCostHeader = parsedData.headers.find(h => h.toLowerCase() === 'column7');
@@ -50,15 +41,13 @@ export default function SummaryCards({ parsedData, columnAnalysis }: SummaryCard
         }
 
         return { 
-            earliestDate: earliest, 
-            latestDate: latest,
             modemCosts: modemCostHeader ? modemTotal : null,
             fiberCosts: fiberCostHeader ? fiberTotal : null
         };
-    }, [parsedData, columnAnalysis]);
+    }, [parsedData]);
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Total Rows</CardTitle>
@@ -103,22 +92,6 @@ export default function SummaryCards({ parsedData, columnAnalysis }: SummaryCard
           </CardContent>
         </Card>
       )}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Date Range</CardTitle>
-          <CalendarRange className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          {earliestDate && latestDate ? (
-            <>
-              <div className="text-xl font-bold">{earliestDate}</div>
-              <p className="text-xs text-muted-foreground">to {latestDate}</p>
-            </>
-          ) : (
-            <div className="text-md font-bold text-muted-foreground">No date columns found</div>
-          )}
-        </CardContent>
-      </Card>
     </div>
   );
 }
