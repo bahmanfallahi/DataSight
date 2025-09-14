@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, ChangeEvent } from 'react';
+import { useState, ChangeEvent } from 'react';
 import type { ParsedData, ColumnAnalysis } from '@/lib/data-utils';
 import { parseDataFile, analyzeColumns } from '@/lib/data-utils';
 import Dashboard from '@/components/data-sight/dashboard';
@@ -8,7 +8,8 @@ import DataSightLogo from '@/components/data-sight/logo';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { UploadCloud, File as FileIcon, Loader2, X } from 'lucide-react';
+import { UploadCloud, Loader2, X } from 'lucide-react';
+import packageJson from '../../package.json';
 
 export default function Home() {
   const [parsedData, setParsedData] = useState<ParsedData | null>(null);
@@ -41,8 +42,6 @@ export default function Home() {
     setFileName(file.name);
 
     try {
-      // The raw text is only needed for the AI analysis, we can read it separately
-      // and only for CSV files for simplicity. Excel data will be stringified.
       let rawDataForAI = '';
       if (file.type === 'text/csv') {
         rawDataForAI = await file.text();
@@ -51,7 +50,6 @@ export default function Home() {
       const parsed = await parseDataFile(file);
 
       if (file.type !== 'text/csv') {
-          // For non-CSV files, stringify the parsed data for the AI analysis
           let csvString = parsed.headers.join(',') + '\n';
           csvString += parsed.data.map(row => 
               parsed.headers.map(header => row[header]).join(',')
@@ -160,6 +158,9 @@ export default function Home() {
         <div className="container flex flex-col items-center justify-between gap-4 md:h-24 md:flex-row">
           <p className="text-balance text-center text-sm leading-loose text-muted-foreground md:text-left">
             develop with ❤️ by bahman fallahi
+          </p>
+          <p className="text-sm text-muted-foreground">
+            Version {packageJson.version}
           </p>
         </div>
       </footer>
