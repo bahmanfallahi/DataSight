@@ -4,12 +4,12 @@ import { useState, ChangeEvent } from 'react';
 import type { ParsedData, ColumnAnalysis } from '@/lib/data-utils';
 import { parseDataFile, analyzeColumns } from '@/lib/data-utils';
 import Dashboard from '@/components/data-sight/dashboard';
-import DataSightLogo from '@/components/data-sight/logo';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { UploadCloud, Loader2, X } from 'lucide-react';
 import packageJson from '../../package.json';
+import { ThemeToggle } from '@/components/theme-toggle';
 
 export default function Home() {
   const [parsedData, setParsedData] = useState<ParsedData | null>(null);
@@ -110,15 +110,17 @@ export default function Home() {
       <header className="sticky top-0 z-40 w-full border-b bg-background/80 backdrop-blur-sm">
         <div className="container mx-auto flex h-16 items-center justify-between px-4 md:px-6">
           <div className="flex items-center gap-2">
-            <DataSightLogo className="h-8 w-8 text-primary" />
             <h1 className="text-2xl font-bold tracking-tight">DataSight</h1>
           </div>
-          {parsedData && (
-            <Button variant="ghost" size="sm" onClick={handleReset}>
-              <X className="mr-2 h-4 w-4" />
-              Clear Data
-            </Button>
-          )}
+          <div className="flex items-center gap-2">
+            {parsedData && (
+              <Button variant="ghost" size="sm" onClick={handleReset}>
+                <X className="mr-2 h-4 w-4" />
+                Clear Data
+              </Button>
+            )}
+            <ThemeToggle />
+          </div>
         </div>
       </header>
 
