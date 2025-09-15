@@ -1,9 +1,14 @@
 import { useTheme } from 'next-themes';
 import type { SVGProps } from 'react';
+import { useState, useEffect } from 'react';
 
 const DataSightLogo = (props: SVGProps<SVGSVGElement>) => {
   const { resolvedTheme } = useTheme();
-  const color = resolvedTheme === 'dark' ? '#E5E7EB' : '#1F2937';
+  const [color, setColor] = useState('#1F2937');
+
+  useEffect(() => {
+    setColor(resolvedTheme === 'dark' ? '#E5E7EB' : '#1F2937');
+  }, [resolvedTheme]);
 
   return (
     <svg
