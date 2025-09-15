@@ -4,7 +4,7 @@ import { useState, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartStyle } from '@/components/ui/chart';
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { Bar, BarChart, XAxis, YAxis, Line, LineChart, Scatter, ScatterChart, CartesianGrid, Legend, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts';
 import type { ParsedData, ColumnAnalysis } from '@/lib/data-utils';
 import { Slider } from '@/components/ui/slider';
@@ -12,7 +12,7 @@ import { Label } from '@/components/ui/label';
 
 const chartConfig = {
   count: { label: 'Count', color: 'hsl(var(--chart-1))' },
-  value: { label: 'Value', color: 'hsl(var(--chart-2))' },
+  value: { label: 'Value', color: 'hsl(var(--chart-1))' },
 };
 
 function formatNumber(num: number): string {
@@ -103,9 +103,9 @@ export default function Visualizer({ parsedData, columnAnalysis }: { parsedData:
 
 
   return (
-    <Card className="h-full">
+    <Card className="h-full shadow-none border">
       <CardHeader>
-        <CardTitle>Data Visualization</CardTitle>
+        <CardTitle className="font-semibold">Data Visualization</CardTitle>
         <CardDescription>Explore your data through interactive charts.</CardDescription>
       </CardHeader>
       <CardContent>
@@ -132,7 +132,7 @@ export default function Visualizer({ parsedData, columnAnalysis }: { parsedData:
               )}
             </div>
             {distributionData.length > 0 ? (
-                <ChartContainer config={chartConfig} className="h-[250px] w-full">
+                <ChartContainer config={chartConfig} className="h-[300px] w-full">
                 <BarChart data={distributionData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
                     <CartesianGrid vertical={false} />
                     <XAxis dataKey="name" tick={{ fontSize: 12 }} tickLine={false} axisLine={false} interval={distributionData.length > 15 ? 'preserveStartEnd' : 0} angle={-30} textAnchor="end" height={60} />
@@ -155,7 +155,7 @@ export default function Visualizer({ parsedData, columnAnalysis }: { parsedData:
                 </Select>
             </div>
             {scatterData.length > 0 ? (
-                <ChartContainer config={{}} className="h-[250px] w-full">
+                <ChartContainer config={{}} className="h-[300px] w-full">
                     <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
                         <CartesianGrid />
                         <XAxis type="number" dataKey="x" name={scatterX} unit="" tick={{ fontSize: 12 }} tickFormatter={formatNumber} />
@@ -178,7 +178,7 @@ export default function Visualizer({ parsedData, columnAnalysis }: { parsedData:
                 </Select>
             </div>
             {timeSeriesData.length > 0 ? (
-                <ChartContainer config={chartConfig} className="h-[250px] w-full">
+                <ChartContainer config={chartConfig} className="h-[300px] w-full">
                     <LineChart data={timeSeriesData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
                         <CartesianGrid vertical={false} />
                         <XAxis dataKey="date" tickFormatter={(d) => new Date(d).toLocaleDateString()} type="number" domain={['dataMin', 'dataMax']} tick={{ fontSize: 12 }} />
@@ -187,7 +187,7 @@ export default function Visualizer({ parsedData, columnAnalysis }: { parsedData:
                             content={({ active, payload, label }) => {
                                 if (active && payload && payload.length) {
                                 return (
-                                    <div className="p-2 border rounded-lg bg-background/80">
+                                    <div className="p-2 border rounded-lg bg-background/80 backdrop-blur-sm">
                                     <p className="font-bold">{new Date(label).toLocaleDateString()}</p>
                                     <p className="text-sm" style={{ color: "var(--color-value)" }}>{`${timeSeriesValue}: ${formatNumber(payload[0].value as number)}`}</p>
                                     </div>

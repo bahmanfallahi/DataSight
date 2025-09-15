@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/tooltip";
 
 const iconMap = {
-  numeric: <Hash className="h-5 w-5 text-blue-500" />,
+  numeric: <Hash className="h-5 w-5 text-primary" />,
   categorical: <CaseSensitive className="h-5 w-5 text-green-500" />,
   date: <CalendarDays className="h-5 w-5 text-purple-500" />,
   unknown: <HelpCircle className="h-5 w-5 text-gray-500" />,
@@ -25,10 +25,10 @@ const StatItem = ({ label, value }: { label: string; value: string | number }) =
 );
 
 const ColumnCard = ({ analysis }: { analysis: ColumnAnalysis }) => (
-  <Card>
+  <Card className="shadow-none border">
     <CardHeader>
       <div className="flex items-start justify-between gap-4">
-        <CardTitle className="text-base font-semibold break-all">{analysis.name}</CardTitle>
+        <CardTitle className="text-lg font-semibold break-all">{analysis.name}</CardTitle>
         <TooltipProvider>
             <Tooltip>
                 <TooltipTrigger asChild>
@@ -41,7 +41,7 @@ const ColumnCard = ({ analysis }: { analysis: ColumnAnalysis }) => (
         </TooltipProvider>
       </div>
        <CardDescription>
-        <Badge variant="secondary" className="capitalize">{analysis.type}</Badge>
+        <Badge variant="outline" className="capitalize">{analysis.type}</Badge>
       </CardDescription>
     </CardHeader>
     <CardContent className="space-y-2">

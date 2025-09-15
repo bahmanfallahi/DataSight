@@ -50,7 +50,7 @@ export default function AiAnalysis({ csvData }: AiAnalysisProps) {
   const renderButton = () => {
     if (isLoading) {
       return (
-        <Button disabled className="mt-4 w-full">
+        <Button disabled size="lg" className="w-full mt-4">
           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
           Analyzing...
         </Button>
@@ -58,7 +58,7 @@ export default function AiAnalysis({ csvData }: AiAnalysisProps) {
     }
     if (analysis) {
       return (
-        <Button onClick={handleCopy} className="mt-4 w-full">
+        <Button onClick={handleCopy} size="lg" className="w-full mt-4">
           {isCopied ? (
             <>
               <Check className="mr-2 h-4 w-4" />
@@ -74,7 +74,7 @@ export default function AiAnalysis({ csvData }: AiAnalysisProps) {
       );
     }
     return (
-      <Button onClick={handleAnalyze} className="mt-4 w-full">
+      <Button onClick={handleAnalyze} size="lg" className="w-full">
         <Sparkles className="mr-2 h-4 w-4" />
         Analyze Sales Trends
       </Button>
@@ -82,14 +82,14 @@ export default function AiAnalysis({ csvData }: AiAnalysisProps) {
   }
 
   return (
-    <Card className="h-full flex flex-col">
+    <Card className="h-full flex flex-col shadow-none border">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
+        <CardTitle className="flex items-center gap-2 font-semibold">
           <Sparkles className="h-5 w-5 text-primary" />
           <span>AI Trend Analysis</span>
         </CardTitle>
         <CardDescription>
-          Identify patterns, seasonality, and correlations in your data.
+          Let AI identify patterns, seasonality, and correlations in your data.
         </CardDescription>
       </CardHeader>
       <CardContent className="flex-grow flex flex-col">
@@ -103,17 +103,19 @@ export default function AiAnalysis({ csvData }: AiAnalysisProps) {
             </div>
           </div>
         ) : analysis ? (
-          <ScrollArea className="h-64">
+          <ScrollArea className="flex-grow h-64 rounded-md bg-secondary/50 p-4">
             <div className="prose prose-sm dark:prose-invert whitespace-pre-wrap font-sans text-sm text-foreground">
               {analysis}
             </div>
           </ScrollArea>
         ) : (
-          <div className="flex flex-col items-center justify-center text-center p-8 border-2 border-dashed rounded-lg flex-grow">
+          <div className="flex flex-col items-center justify-center text-center p-8 border-2 border-dashed rounded-lg flex-grow bg-secondary/30">
             <p className="text-sm text-muted-foreground">Click the button to generate an AI-powered analysis of your sales data.</p>
           </div>
         )}
-        {renderButton()}
+        <div className="mt-auto pt-4">
+          {renderButton()}
+        </div>
       </CardContent>
     </Card>
   );

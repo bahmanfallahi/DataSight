@@ -89,10 +89,10 @@ export default function Home() {
   
   const FileUploader = () => (
     <div className="w-full max-w-2xl mx-auto">
-      <div className="relative border-2 border-dashed border-muted-foreground/50 rounded-xl p-8 text-center transition-colors hover:border-primary/80 hover:bg-card/50">
+      <div className="relative border-2 border-dashed border-border rounded-xl p-8 text-center transition-colors hover:border-primary/80 bg-secondary/30 hover:bg-secondary/50">
         <UploadCloud className="mx-auto h-12 w-12 text-muted-foreground" />
-        <h3 className="mt-4 text-lg font-semibold text-foreground">Drag & drop your CSV or Excel file</h3>
-        <p className="mt-1 text-sm text-muted-foreground">or click to browse</p>
+        <h3 className="mt-4 text-lg font-semibold text-foreground">Drag & drop your file</h3>
+        <p className="mt-1 text-sm text-muted-foreground">or click to browse for a CSV or Excel file</p>
         <Input
           id="file-upload"
           type="file"
@@ -111,7 +111,7 @@ export default function Home() {
         <div className="container mx-auto flex h-16 items-center justify-between px-4 md:px-6">
           <div className="flex items-center gap-2">
             <DataSightLogo className="h-8 w-8 text-primary" />
-            <h1 className="text-2xl font-bold tracking-tight text-primary">DataSight</h1>
+            <h1 className="text-2xl font-bold tracking-tight">DataSight</h1>
           </div>
           {parsedData && (
             <Button variant="ghost" size="sm" onClick={handleReset}>
@@ -126,8 +126,8 @@ export default function Home() {
         <div className="container mx-auto px-4 md:px-6 py-8">
           {!parsedData && (
             <div className="flex flex-col items-center justify-center text-center py-16">
-              <h2 className="text-4xl font-extrabold tracking-tight mb-4 text-primary">
-                Unlock Insights from Your Sales Data
+              <h2 className="text-4xl lg:text-5xl font-extrabold tracking-tight mb-4">
+                Unlock Insights From Your Data
               </h2>
               <p className="max-w-2xl text-lg text-muted-foreground mb-8">
                 Upload a CSV or Excel file to automatically profile columns, visualize distributions, and analyze trends with AI.
