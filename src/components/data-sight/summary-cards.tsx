@@ -19,28 +19,34 @@ const formatCurrency = (value: number) => {
   };
 
 export default function SummaryCards({ parsedData, columnAnalysis }: SummaryCardsProps) {
-    const { modemCosts, fiberCosts, topCategoricalValues, topIntroChannel } = useMemo(() => {
-        let modemTotal = 0;
-        let fiberTotal = 0;
+    const { fiberSaleTotal, ontSaleTotal, topCategoricalValues, topIntroChannel } = useMemo(() => {
+        let fiberSale = 0;
+        let ontSale = 0;
 
-        const modemCostHeader = parsedData.headers.find(h => h.toLowerCase() === 'column6');
-        const fiberCostHeader = parsedData.headers.find(h => h.toLowerCase() === 'column7');
+        const fiberSaleHeader = parsedData.headers.find(h => h.toLowerCase() === 'fiber sale');
+        const ontSaleHeader = parsedData.headers.find(h => h.toLowerCase() === 'ont sale');
+        const introChannelHeaderName = "how to meet";
 
-        if (modemCostHeader) {
-            modemTotal = parsedData.data.reduce((sum, row) => {
-                const value = parseFloat(row[modemCostHeader]);
+        if (fiberSaleHeader) {
+            fiberSale = parsedData.data.reduce((sum, row) => {
+                const value = parseFloat(row[fiberSaleHeader]);
                 return sum + (isNaN(value) ? 0 : value);
             }, 0);
         }
 
-        if (fiberCostHeader) {
-            fiberTotal = parsedData.data.reduce((sum, row) => {
-                const value = parseFloat(row[fiberCostHeader]);
+        if (ontSaleHeader) {
+            ontSale = parsedData.data.reduce((sum, row) => {
+                const value = parseFloat(row[ontSaleHeader]);
                 return sum + (isNaN(value) ? 0 : value);
             }, 0);
         }
 
-        const categoricalCols = columnAnalysis.filter(c => c.type === 'categorical' && c.stats.uniqueCount > 1 && c.stats.uniqueCount < parsedData.data.length);
+        const categoricalCols = columnAnalysis.filter(c => 
+            c.type === 'categorical' && 
+            c.stats.uniqueCount > 1 && 
+            c.stats.uniqueCount < parsedData.data.length
+        );
+
         const topValues = categoricalCols.map(col => {
             const topValue = Object.keys(col.stats.frequencies)[0];
             const topValueCount = col.stats.frequencies[topValue];
@@ -51,8 +57,7 @@ export default function SummaryCards({ parsedData, columnAnalysis }: SummaryCard
             };
         });
         
-        // Specifically find the top introduction channel, assuming it's in a column named "Column10"
-        const introChannelCol = columnAnalysis.find(c => c.name.toLowerCase() === 'column10');
+        const introChannelCol = columnAnalysis.find(c => c.name.toLowerCase() === introChannelHeaderName);
         let topIntroChannel = null;
         if (introChannelCol && introChannelCol.type === 'categorical') {
             const topValue = Object.keys(introChannelCol.stats.frequencies)[0];
@@ -63,11 +68,10 @@ export default function SummaryCards({ parsedData, columnAnalysis }: SummaryCard
             };
         }
 
-
         return { 
-            modemCosts: modemCostHeader ? modemTotal : null,
-            fiberCosts: fiberCostHeader ? fiberTotal : null,
-            topCategoricalValues: topValues.filter(v => v.columnName.toLowerCase() !== 'column10'), // Exclude intro channel from generic cards
+            fiberSaleTotal: fiberSaleHeader ? fiberSale : null,
+            ontSaleTotal: ontSaleHeader ? ontSale : null,
+            topCategoricalValues: topValues.filter(v => v.columnName.toLowerCase() !== introChannelHeaderName),
             topIntroChannel
         };
     }, [parsedData, columnAnalysis]);
@@ -94,27 +98,27 @@ export default function SummaryCards({ parsedData, columnAnalysis }: SummaryCard
           <p className="text-xs text-muted-foreground">features analyzed</p>
         </CardContent>
       </Card>
-      {modemCosts !== null && (
+      {fiberSaleTotal !== null && (
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Fiber Cost</CardTitle>
+            <CardTitle className="text-sm font-medium">Total Fiber Sale</CardTitle>
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{formatCurrency(modemCosts)}</div>
-            <p className="text-xs text-muted-foreground">Sum of Column6</p>
+            <div className="text-2xl font-bold">{formatCurrency(fiberSaleTotal)}</div>
+            <p className="text-xs text-muted-foreground">Sum of "Fiber sale"</p>
           </CardContent>
         </Card>
       )}
-      {fiberCosts !== null && (
+      {ontSaleTotal !== null && (
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total ONT sales</CardTitle>
+            <CardTitle className="text-sm font-medium">Total ONT Sale</CardTitle>
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{formatCurrency(fiberCosts)}</div>
-            <p className="text-xs text-muted-foreground">Sum of Column7</p>
+            <div className="text-2xl font-bold">{formatCurrency(ontSaleTotal)}</div>
+            <p className="text-xs text-muted-foreground">Sum of "ont sale"</p>
           </CardContent>
         </Card>
       )}
