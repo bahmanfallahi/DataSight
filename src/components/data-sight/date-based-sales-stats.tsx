@@ -49,13 +49,13 @@ const StatCard = ({
 )
 
 export default function DateBasedSalesStats({ parsedData }: { parsedData: ParsedData }) {
-    const { bestDay, bestWeek, worstWeek } = useMemo(() => {
+    const { bestDay, worstDay, bestWeek, worstWeek } = useMemo(() => {
         const dateHeader = parsedData.headers.find(h => h.toLowerCase() === 'date');
         const fiberSaleHeader = parsedData.headers.find(h => h.toLowerCase() === 'fiber sale');
         const ontSaleHeader = parsedData.headers.find(h => h.toLowerCase() === 'ont sale');
 
         if (!dateHeader || !fiberSaleHeader || !ontSaleHeader) {
-            return { bestDay: null, bestWeek: null, worstWeek: null };
+            return { bestDay: null, worstDay: null, bestWeek: null, worstWeek: null };
         }
         
         // --- Sales by Day ---
@@ -73,9 +73,13 @@ export default function DateBasedSalesStats({ parsedData }: { parsedData: Parsed
         });
 
         let bestDay = { date: '', total: 0 };
+        let worstDay = { date: '', total: Infinity };
         for (const [date, total] of Object.entries(salesByDay)) {
             if (total > bestDay.total) {
                 bestDay = { date, total };
+            }
+            if (total < worstDay.total) {
+                worstDay = { date, total };
             }
         }
         
@@ -92,7 +96,12 @@ export default function DateBasedSalesStats({ parsedData }: { parsedData: Parsed
             .sort((a, b) => a.getTime() - b.getTime());
 
         if (validDates.length === 0) {
-            return { bestDay: bestDay.date ? bestDay : null, bestWeek: null, worstWeek: null };
+            return { 
+                bestDay: bestDay.date ? bestDay : null, 
+                worstDay: worstDay.date && worstDay.total !== Infinity ? worstDay : null,
+                bestWeek: null, 
+                worstWeek: null 
+            };
         }
 
         const firstDate = startOfDay(validDates[0]);
@@ -101,7 +110,6 @@ export default function DateBasedSalesStats({ parsedData }: { parsedData: Parsed
         for (const [dateStr, total] of Object.entries(salesByDay)) {
             try {
                 const dateObj = parseJalali(dateStr, 'yyyy/MM/dd', new Date());
-                // Calculate week number relative to the first date in the dataset
                 const weekNumber = differenceInWeeks(startOfDay(dateObj), firstDate, { weekStartsOn: 6 }) + 1; // Saturday
                 
                 if (!salesByWeek[weekNumber]) {
@@ -131,12 +139,13 @@ export default function DateBasedSalesStats({ parsedData }: { parsedData: Parsed
 
         return {
             bestDay: bestDay.date ? bestDay : null,
+            worstDay: worstDay.date && worstDay.total !== Infinity ? worstDay : null,
             bestWeek: bestWeek.week !== -1 ? bestWeek : null,
             worstWeek: worstWeek.week !== -1 ? worstWeek : null,
         };
     }, [parsedData]);
     
-    if (!bestDay && !bestWeek && !worstWeek) {
+    if (!bestDay && !worstDay && !bestWeek && !worstWeek) {
         return null;
     }
 
@@ -151,13 +160,23 @@ export default function DateBasedSalesStats({ parsedData }: { parsedData: Parsed
                     Analysis of sales performance based on daily and weekly trends.
                 </CardDescription>
             </CardHeader>
-            <CardContent className="grid gap-4 md:grid-cols-3">
+            <CardContent className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                 {bestDay && (
                     <StatCard
-                        icon={Calendar}
+                        icon={TrendingUp}
                         title="Best Selling Day"
                         value={bestDay.date}
                         description={`with ${formatCurrency(bestDay.total)} in sales`}
+                        className="border-green-500/50"
+                    />
+                )}
+                {worstDay && (
+                    <StatCard
+                        icon={TrendingDown}
+                        title="Weakest Selling Day"
+                        value={worstDay.date}
+                        description={`with ${formatCurrency(worstDay.total)} in sales`}
+                        className="border-red-500/50"
                     />
                 )}
                 {bestWeek && (
