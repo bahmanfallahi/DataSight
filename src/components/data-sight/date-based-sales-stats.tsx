@@ -1,0 +1,155 @@
+'use client';
+
+import { useMemo } from 'react';
+import type { ParsedData } from '@/lib/data-utils';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { TrendingUp, TrendingDown, Calendar, CalendarDays } from 'lucide-react';
+import { format as formatDate, getWeekOfMonth, parse } from 'date-fns';
+import { zonedTimeToUtc } from 'date-fns-tz';
+import { faIR } from 'date-fns/locale';
+import { getWeek as getWeekJalali, parse as parseJalali } from 'date-fns-jalali';
+
+const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('fa-IR').format(value) + ' [T]';
+};
+
+const StatCard = ({
+    icon: Icon,
+    title,
+    value,
+    description,
+    className
+}: {
+    icon: React.ElementType,
+    title: string,
+    value: string,
+    description: string,
+    className?: string
+}) => (
+    <Card className={className}>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">{title}</CardTitle>
+            <Icon className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+            <div className="text-2xl font-bold">{value}</div>
+            <p className="text-xs text-muted-foreground">{description}</p>
+        </CardContent>
+    </Card>
+)
+
+export default function DateBasedSalesStats({ parsedData }: { parsedData: ParsedData }) {
+    const { bestDay, bestWeek, worstWeek } = useMemo(() => {
+        const dateHeader = parsedData.headers.find(h => h.toLowerCase() === 'date');
+        const fiberSaleHeader = parsedData.headers.find(h => h.toLowerCase() === 'fiber sale');
+        const ontSaleHeader = parsedData.headers.find(h => h.toLowerCase() === 'ont sale');
+
+        if (!dateHeader || !fiberSaleHeader || !ontSaleHeader) {
+            return { bestDay: null, bestWeek: null, worstWeek: null };
+        }
+
+        const salesByDay: Record<string, number> = {};
+        parsedData.data.forEach(row => {
+            const dateStr = row[dateHeader];
+            if (!dateStr) return;
+            const totalSale = (parseFloat(row[fiberSaleHeader]) || 0) + (parseFloat(row[ontSaleHeader]) || 0);
+
+            if (salesByDay[dateStr]) {
+                salesByDay[dateStr] += totalSale;
+            } else {
+                salesByDay[dateStr] = totalSale;
+            }
+        });
+
+        let bestDay = { date: '', total: 0 };
+        for (const [date, total] of Object.entries(salesByDay)) {
+            if (total > bestDay.total) {
+                bestDay = { date, total };
+            }
+        }
+        
+        const salesByWeek: Record<number, { total: number; days: Set<string> }> = {};
+        for (const dateStr of Object.keys(salesByDay)) {
+            try {
+                const dateObj = parseJalali(dateStr);
+                const weekNumber = getWeekJalali(dateObj, { weekStartsOn: 6 }); // Saturday
+                
+                if (!salesByWeek[weekNumber]) {
+                    salesByWeek[weekNumber] = { total: 0, days: new Set() };
+                }
+                salesByWeek[weekNumber].total += salesByDay[dateStr];
+                salesByWeek[weekNumber].days.add(dateStr);
+
+            } catch (e) {
+                console.error(`Invalid date format for: ${dateStr}`, e);
+            }
+        }
+        
+        let bestWeek = { week: -1, total: -1 };
+        let worstWeek = { week: -1, total: Infinity };
+
+        for (const weekStr in salesByWeek) {
+            const week = parseInt(weekStr, 10);
+            const { total } = salesByWeek[week];
+
+            if (total > bestWeek.total) {
+                bestWeek = { week, total };
+            }
+            if (total < worstWeek.total) {
+                worstWeek = { week, total };
+            }
+        }
+
+        return {
+            bestDay: bestDay.date ? bestDay : null,
+            bestWeek: bestWeek.week !== -1 ? bestWeek : null,
+            worstWeek: worstWeek.week !== -1 ? worstWeek : null,
+        };
+    }, [parsedData]);
+    
+    if (!bestDay && !bestWeek && !worstWeek) {
+        return null;
+    }
+
+    return (
+        <Card>
+            <CardHeader>
+                <div className="flex items-center gap-2">
+                    <CalendarDays className="h-5 w-5" />
+                    <CardTitle>Date-Based Sales Analysis</CardTitle>
+                </div>
+                <CardDescription>
+                    Analysis of sales performance based on daily and weekly trends.
+                </CardDescription>
+            </CardHeader>
+            <CardContent className="grid gap-4 md:grid-cols-3">
+                {bestDay && (
+                    <StatCard
+                        icon={Calendar}
+                        title="Best Selling Day"
+                        value={bestDay.date}
+                        description={`with ${formatCurrency(bestDay.total)} in sales`}
+                    />
+                )}
+                {bestWeek && (
+                     <StatCard
+                        icon={TrendingUp}
+                        title="Best Selling Week"
+                        value={`Week ${bestWeek.week}`}
+                        description={`with ${formatCurrency(bestWeek.total)} in sales`}
+                        className="border-green-500/50"
+                    />
+                )}
+                {worstWeek && (
+                    <StatCard
+                        icon={TrendingDown}
+                        title="Weakest Selling Week"
+                        value={`Week ${worstWeek.week}`}
+                        description={`with ${formatCurrency(worstWeek.total)} in sales`}
+                        className="border-red-500/50"
+                    />
+                )}
+            </CardContent>
+        </Card>
+    );
+}
