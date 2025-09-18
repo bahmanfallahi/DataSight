@@ -4,9 +4,6 @@ import { useMemo } from 'react';
 import type { ParsedData } from '@/lib/data-utils';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { TrendingUp, TrendingDown, Calendar, CalendarDays } from 'lucide-react';
-import { format as formatDate, getWeekOfMonth, parse } from 'date-fns';
-import { zonedTimeToUtc } from 'date-fns-tz';
-import { faIR } from 'date-fns/locale';
 import { getWeek as getWeekJalali, parse as parseJalali } from 'date-fns-jalali';
 
 const formatCurrency = (value: number) => {
@@ -71,7 +68,7 @@ export default function DateBasedSalesStats({ parsedData }: { parsedData: Parsed
         const salesByWeek: Record<number, { total: number; days: Set<string> }> = {};
         for (const dateStr of Object.keys(salesByDay)) {
             try {
-                const dateObj = parseJalali(dateStr);
+                const dateObj = parseJalali(dateStr, 'yyyy/MM/dd', new Date());
                 const weekNumber = getWeekJalali(dateObj, { weekStartsOn: 6 }); // Saturday
                 
                 if (!salesByWeek[weekNumber]) {
