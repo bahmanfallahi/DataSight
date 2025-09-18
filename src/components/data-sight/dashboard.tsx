@@ -6,6 +6,7 @@ import SummaryCards from '@/components/data-sight/summary-cards';
 import Visualizer from '@/components/data-sight/visualizer';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { File as FileIcon } from 'lucide-react';
+import AgentSalesTable from './agent-sales-table';
 
 interface DashboardProps {
   csvData: string;
@@ -31,6 +32,8 @@ export default function Dashboard({
       </div>
 
       <SummaryCards parsedData={parsedData} columnAnalysis={columnAnalysis} />
+
+      <AgentSalesTable parsedData={parsedData} />
       
       <div className="grid gap-8 lg:grid-cols-3">
         <div className="lg:col-span-2">
