@@ -10,13 +10,12 @@ interface SummaryCardsProps {
 }
 
 const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
+    return '[T] ' + new Intl.NumberFormat('en-US', {
+      style: 'decimal',
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
     }).format(value);
-  };
+};
 
 export default function SummaryCards({ parsedData, columnAnalysis }: SummaryCardsProps) {
     const { fiberSaleTotal, ontSaleTotal, topCategoricalValues, topIntroChannel } = useMemo(() => {
