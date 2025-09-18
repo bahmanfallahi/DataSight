@@ -31,11 +31,10 @@ interface AgentSales {
 
 const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
+      style: 'decimal',
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
-    }).format(value);
+    }).format(value) + ' [T]';
 };
 
 export default function AgentSalesTable({ parsedData }: AgentSalesTableProps) {

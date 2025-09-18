@@ -8,13 +8,15 @@ import { TrendingUp, TrendingDown, Calendar, CalendarDays } from 'lucide-react';
 import { parse as parseJalali, differenceInWeeks, startOfDay } from 'date-fns-jalali';
 
 const formatCurrency = (value: number) => {
-    // Use 'fa-IR' for Persian numerals and formatting.
-    return new Intl.NumberFormat('fa-IR', {
+    // Use 'en-US' and then manually construct the string to avoid inconsistencies.
+    const formattedValue = new Intl.NumberFormat('en-US', {
       style: 'decimal',
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
-    }).format(value) + ' [T]';
+    }).format(value);
+    return `${formattedValue} [T]`;
 };
+
 
 const getOrdinal = (n: number) => {
     const s = ["th", "st", "nd", "rd"];
