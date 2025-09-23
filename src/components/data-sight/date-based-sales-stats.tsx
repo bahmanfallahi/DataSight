@@ -37,13 +37,13 @@ const StatCard = ({
     description: string,
     className?: string
 }) => (
-    <Card className={cn("bg-card/50 shadow-sm border-0", className)}>
+    <Card className="bg-card/50 shadow-sm border-0">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{title}</CardTitle>
-            <Icon className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className={cn("text-sm font-medium", className)}>{title}</CardTitle>
+            <Icon className={cn("h-4 w-4 text-muted-foreground", className)} />
         </CardHeader>
         <CardContent>
-            <div className="text-2xl font-bold">{value}</div>
+            <div className={cn("text-2xl font-bold", className)}>{value}</div>
             <p className="text-xs text-muted-foreground">{description}</p>
         </CardContent>
     </Card>
