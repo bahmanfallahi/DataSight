@@ -50,7 +50,7 @@ export default function OntSalesPieChart({ parsedData }: { parsedData: ParsedDat
       const ontSaleValue = parseFloat(row[ontSaleHeader]);
       if (isNaN(ontSaleValue) || ontSaleValue === 0) return;
       
-      const ontPrice = formatCurrency(ontSaleValue);
+      const ontPrice = String(ontSaleValue);
 
       if (!salesMap[ontPrice]) {
         salesMap[ontPrice] = 0;
@@ -61,7 +61,7 @@ export default function OntSalesPieChart({ parsedData }: { parsedData: ParsedDat
 
     const chartData = Object.entries(salesMap)
       .map(([name, totalSales], index) => ({
-        name,
+        name: formatCurrency(Number(name)),
         totalSales,
         fill: COLORS[index % COLORS.length],
       }))
