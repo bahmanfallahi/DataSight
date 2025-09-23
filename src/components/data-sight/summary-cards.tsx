@@ -1,3 +1,4 @@
+
 'use client';
 import { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -134,19 +135,19 @@ export default function SummaryCards({ parsedData, columnAnalysis }: SummaryCard
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
       {ontSaleTotal !== null && (
-        <Card className="transition-all hover:shadow-lg hover:border-primary border-primary">
+        <Card className="bg-primary text-primary-foreground shadow-lg">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-primary">Total ONT Sale</CardTitle>
-            <DollarSign className="h-4 w-4 text-primary" />
+            <CardTitle className="text-sm font-medium">Total ONT Sale</CardTitle>
+            <DollarSign className="h-4 w-4 text-primary-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-primary">{formatCurrency(ontSaleTotal)}</div>
-            <p className="text-xs text-muted-foreground">Sum of "ont sale"</p>
+            <div className="text-2xl font-bold">{formatCurrency(ontSaleTotal)}</div>
+            <p className="text-xs text-primary-foreground/80">Sum of "ont sale"</p>
           </CardContent>
         </Card>
       )}
       {fiberSaleTotal !== null && (
-        <Card className="transition-all hover:shadow-md">
+        <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Fiber Sale</CardTitle>
             <DollarSign className="h-4 w-4 text-muted-foreground" />
@@ -158,7 +159,7 @@ export default function SummaryCards({ parsedData, columnAnalysis }: SummaryCard
         </Card>
       )}
       {topIntroChannel && (
-        <Card className="transition-all hover:shadow-md">
+        <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Top Intro Channel</CardTitle>
                 <Contact className="h-4 w-4 text-muted-foreground" />
@@ -170,7 +171,7 @@ export default function SummaryCards({ parsedData, columnAnalysis }: SummaryCard
         </Card>
       )}
        {topFiberSale && (
-        <Card className="transition-all hover:shadow-md">
+        <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Top Fiber Sale Type</CardTitle>
                 <Percent className="h-4 w-4 text-muted-foreground" />
@@ -182,7 +183,7 @@ export default function SummaryCards({ parsedData, columnAnalysis }: SummaryCard
         </Card>
       )}
       {topOntSale && (
-        <Card className="transition-all hover:shadow-md">
+        <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Top ONT Sale Type</CardTitle>
                 <Tag className="h-4 w-4 text-muted-foreground" />
@@ -194,7 +195,7 @@ export default function SummaryCards({ parsedData, columnAnalysis }: SummaryCard
         </Card>
       )}
       {topCategoricalValues.map(item => (
-        <Card key={item.columnName} className="transition-all hover:shadow-md">
+        <Card key={item.columnName}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Top {item.columnName}</CardTitle>
                 <Star className="h-4 w-4 text-muted-foreground" />
@@ -208,3 +209,5 @@ export default function SummaryCards({ parsedData, columnAnalysis }: SummaryCard
     </div>
   );
 }
+
+    
