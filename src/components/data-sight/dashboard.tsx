@@ -1,6 +1,5 @@
 'use client';
 import type { ParsedData, ColumnAnalysis } from '@/lib/data-utils';
-import AiAnalysis from '@/components/data-sight/ai-analysis';
 import ColumnProfiler from '@/components/data-sight/column-profiler';
 import SummaryCards from '@/components/data-sight/summary-cards';
 import Visualizer from '@/components/data-sight/visualizer';
@@ -9,16 +8,16 @@ import { File as FileIcon } from 'lucide-react';
 import AgentSalesTable from './agent-sales-table';
 import DateBasedSalesStats from './date-based-sales-stats';
 import SalesOverTimeChart from './sales-over-time-chart';
+import ExpertSalesPieChart from './expert-sales-pie-chart';
+import OntSalesPieChart from './ont-sales-pie-chart';
 
 interface DashboardProps {
-  csvData: string;
   parsedData: ParsedData;
   columnAnalysis: ColumnAnalysis[];
   fileName: string;
 }
 
 export default function Dashboard({
-  csvData,
   parsedData,
   columnAnalysis,
   fileName,
@@ -39,15 +38,14 @@ export default function Dashboard({
       
       <DateBasedSalesStats parsedData={parsedData} />
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <SalesOverTimeChart parsedData={parsedData} />
-        <Visualizer parsedData={parsedData} columnAnalysis={columnAnalysis} />
+        <ExpertSalesPieChart parsedData={parsedData} />
+        <OntSalesPieChart parsedData={parsedData} />
       </div>
 
-      <div className="grid gap-8 lg:grid-cols-3">
-        <div className="lg:col-span-3">
-          <AiAnalysis csvData={csvData} />
-        </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+         <Visualizer parsedData={parsedData} columnAnalysis={columnAnalysis} />
       </div>
       
       <div>

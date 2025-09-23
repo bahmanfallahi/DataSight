@@ -149,7 +149,6 @@ export default function Home() {
 
           {parsedData && columnAnalysis && (
             <Dashboard
-              csvData={csvData}
               parsedData={parsedData}
               columnAnalysis={columnAnalysis}
               fileName={fileName}
