@@ -38,8 +38,9 @@ export default function Dashboard({
       
       <DateBasedSalesStats parsedData={parsedData} />
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <SalesOverTimeChart parsedData={parsedData} />
+      <SalesOverTimeChart parsedData={parsedData} />
+      
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <ExpertSalesPieChart parsedData={parsedData} />
         <OntSalesPieChart parsedData={parsedData} />
       </div>
