@@ -23,7 +23,7 @@ export default function Dashboard({
   fileName,
 }: DashboardProps) {
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <div className="space-y-2">
           <div className="flex items-center gap-2">
             <FileIcon className="h-5 w-5 text-muted-foreground" />
@@ -33,20 +33,20 @@ export default function Dashboard({
       </div>
 
       <SummaryCards parsedData={parsedData} columnAnalysis={columnAnalysis} />
-
-      <AgentSalesTable parsedData={parsedData} />
       
       <DateBasedSalesStats parsedData={parsedData} />
-      
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <SalesOverTimeChart parsedData={parsedData} />
         <Visualizer parsedData={parsedData} columnAnalysis={columnAnalysis} />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <ExpertSalesPieChart parsedData={parsedData} />
         <OntSalesPieChart parsedData={parsedData} />
       </div>
+      
+      <AgentSalesTable parsedData={parsedData} />
       
       <div>
         <h2 className="text-2xl font-bold tracking-tight mb-4">Column Profiler</h2>

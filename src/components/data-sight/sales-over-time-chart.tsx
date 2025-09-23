@@ -3,7 +3,7 @@
 import { useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
-import { Area, AreaChart, CartesianGrid, XAxis, YAxis, Tooltip as RechartsTooltip } from 'recharts';
+import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from 'recharts';
 import type { ParsedData } from '@/lib/data-utils';
 import { parse as parseJalali } from 'date-fns-jalali';
 import { TrendingUp } from 'lucide-react';
@@ -143,15 +143,22 @@ export default function SalesOverTimeChart({ parsedData }: { parsedData: ParsedD
                     />
                     <defs>
                         <linearGradient id="fillSales" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="var(--color-sales)" stopOpacity={0.8} />
-                            <stop offset="95%" stopColor="var(--color-sales)" stopOpacity={0.1} />
+                            <stop
+                                offset="5%"
+                                stopColor="var(--color-sales)"
+                                stopOpacity={0.8}
+                            />
+                            <stop
+                                offset="95%"
+                                stopColor="var(--color-sales)"
+                                stopOpacity={0.1}
+                            />
                         </linearGradient>
                     </defs>
                     <Area
                         dataKey="sales"
                         type="natural"
                         fill="url(#fillSales)"
-                        fillOpacity={0.4}
                         stroke="var(--color-sales)"
                         stackId="a"
                     />

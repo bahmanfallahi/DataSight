@@ -1,8 +1,9 @@
 'use client';
 import { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, Columns, DollarSign, Star, Contact, Tag, Percent } from 'lucide-react';
+import { DollarSign, Star, Contact, Tag, Percent } from 'lucide-react';
 import type { ParsedData, ColumnAnalysis } from '@/lib/data-utils';
+import { cn } from '@/lib/utils';
 
 interface SummaryCardsProps {
   parsedData: ParsedData;
@@ -133,74 +134,74 @@ export default function SummaryCards({ parsedData, columnAnalysis }: SummaryCard
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
       {ontSaleTotal !== null && (
-        <Card className="group transition-colors hover:bg-primary hover:text-primary-foreground">
+        <Card className="transition-all hover:shadow-lg hover:border-primary border-primary">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total ONT Sale</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground group-hover:text-primary-foreground" />
+            <CardTitle className="text-sm font-medium text-primary">Total ONT Sale</CardTitle>
+            <DollarSign className="h-4 w-4 text-primary" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{formatCurrency(ontSaleTotal)}</div>
-            <p className="text-xs text-muted-foreground group-hover:text-primary-foreground/80">Sum of "ont sale"</p>
+            <div className="text-2xl font-bold text-primary">{formatCurrency(ontSaleTotal)}</div>
+            <p className="text-xs text-muted-foreground">Sum of "ont sale"</p>
           </CardContent>
         </Card>
       )}
       {fiberSaleTotal !== null && (
-        <Card className="group transition-colors hover:bg-primary hover:text-primary-foreground">
+        <Card className="transition-all hover:shadow-md">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Fiber Sale</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground group-hover:text-primary-foreground" />
+            <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{formatCurrency(fiberSaleTotal)}</div>
-            <p className="text-xs text-muted-foreground group-hover:text-primary-foreground/80">Sum of "Fiber sale"</p>
+            <p className="text-xs text-muted-foreground">Sum of "Fiber sale"</p>
           </CardContent>
         </Card>
       )}
       {topIntroChannel && (
-        <Card className="group transition-colors hover:bg-primary hover:text-primary-foreground">
+        <Card className="transition-all hover:shadow-md">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Top Intro Channel</CardTitle>
-                <Contact className="h-4 w-4 text-muted-foreground group-hover:text-primary-foreground" />
+                <Contact className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
                 <div className="text-2xl font-bold">{topIntroChannel.value}</div>
-                <p className="text-xs text-muted-foreground group-hover:text-primary-foreground/80">{topIntroChannel.count.toLocaleString()} occurrences</p>
+                <p className="text-xs text-muted-foreground">{topIntroChannel.count.toLocaleString()} occurrences</p>
             </CardContent>
         </Card>
       )}
        {topFiberSale && (
-        <Card className="group transition-colors hover:bg-primary hover:text-primary-foreground">
+        <Card className="transition-all hover:shadow-md">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Top Fiber Sale Type</CardTitle>
-                <Percent className="h-4 w-4 text-muted-foreground group-hover:text-primary-foreground" />
+                <Percent className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
                 <div className="text-lg font-bold">{topFiberSale.value}</div>
-                <p className="text-xs text-muted-foreground group-hover:text-primary-foreground/80">{topFiberSale.count.toLocaleString()} occurrences</p>
+                <p className="text-xs text-muted-foreground">{topFiberSale.count.toLocaleString()} occurrences</p>
             </CardContent>
         </Card>
       )}
       {topOntSale && (
-        <Card className="group transition-colors hover:bg-primary hover:text-primary-foreground">
+        <Card className="transition-all hover:shadow-md">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Top ONT Sale Type</CardTitle>
-                <Tag className="h-4 w-4 text-muted-foreground group-hover:text-primary-foreground" />
+                <Tag className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
                 <div className="text-2xl font-bold">{topOntSale.value}</div>
-                <p className="text-xs text-muted-foreground group-hover:text-primary-foreground/80">{topOntSale.count.toLocaleString()} occurrences</p>
+                <p className="text-xs text-muted-foreground">{topOntSale.count.toLocaleString()} occurrences</p>
             </CardContent>
         </Card>
       )}
       {topCategoricalValues.map(item => (
-        <Card key={item.columnName} className="group transition-colors hover:bg-primary hover:text-primary-foreground">
+        <Card key={item.columnName} className="transition-all hover:shadow-md">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Top {item.columnName}</CardTitle>
-                <Star className="h-4 w-4 text-muted-foreground group-hover:text-primary-foreground" />
+                <Star className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
                 <div className="text-2xl font-bold">{item.value}</div>
-                <p className="text-xs text-muted-foreground group-hover:text-primary-foreground/80">{item.count.toLocaleString()} occurrences</p>
+                <p className="text-xs text-muted-foreground">{item.count.toLocaleString()} occurrences</p>
             </CardContent>
         </Card>
       ))}
