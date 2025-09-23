@@ -57,8 +57,8 @@ export default function AgentSalesTable({ parsedData }: AgentSalesTableProps) {
         salesMap[agent] = { fiberSale: 0, ontSale: 0 };
       }
 
-      const fiberSale = parseFloat(row[fiberSaleHeader]) || 0;
-      const ontSale = parseFloat(row[ontSaleHeader]) || 0;
+      const fiberSale = parseFloat(String(row[fiberSaleHeader])) || 0;
+      const ontSale = parseFloat(String(row[ontSaleHeader])) || 0;
 
       salesMap[agent].fiberSale += fiberSale;
       salesMap[agent].ontSale += ontSale;

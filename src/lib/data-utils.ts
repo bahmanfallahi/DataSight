@@ -21,8 +21,13 @@ function cleanValue(value: any): any {
 
   const stringValue = String(value).trim();
   
-  if (stringValue.toLowerCase() === 'free' || stringValue.toLowerCase() === 'have' || stringValue === '-') {
+  if (stringValue === '-') {
     return 0; // Standardize special categorical values that imply a zero cost
+  }
+  
+  // Return "Free" and "Have" as is
+  if (stringValue.toLowerCase() === 'free' || stringValue.toLowerCase() === 'have') {
+    return stringValue;
   }
   
   // Remove commas from numbers
