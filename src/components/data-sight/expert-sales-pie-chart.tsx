@@ -24,18 +24,7 @@ const COLORS = [
   'hsl(var(--chart-3))',
   'hsl(var(--chart-4))',
   'hsl(var(--chart-5))',
-  'hsl(220, 70%, 50%)',
-  'hsl(300, 70%, 50%)',
-  'hsl(120, 70%, 50%)',
 ];
-
-const formatCurrency = (value: number) => {
-    return '[T] ' + new Intl.NumberFormat('en-US', {
-      style: 'decimal',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(value);
-};
 
 export default function ExpertSalesPieChart({ parsedData }: { parsedData: ParsedData }) {
   const { chartData, totalRevenue } = useMemo(() => {
@@ -65,13 +54,26 @@ export default function ExpertSalesPieChart({ parsedData }: { parsedData: Parsed
       totalRevenue += totalSale;
     });
 
-    const chartData = Object.entries(salesMap)
-      .map(([name, totalSales], index) => ({
+    const sortedSales = Object.entries(salesMap)
+      .map(([name, totalSales]) => ({
         name,
         totalSales,
-        fill: COLORS[index % COLORS.length],
       }))
       .sort((a, b) => b.totalSales - a.totalSales);
+
+    let finalData;
+    if (sortedSales.length > 4) {
+      const topFour = sortedSales.slice(0, 4);
+      const otherTotal = sortedSales.slice(4).reduce((acc, curr) => acc + curr.totalSales, 0);
+      finalData = [...topFour, { name: 'Other', totalSales: otherTotal }];
+    } else {
+      finalData = sortedSales;
+    }
+
+    const chartData = finalData.map((item, index) => ({
+      ...item,
+      fill: COLORS[index % COLORS.length],
+    }));
 
     return { chartData, totalRevenue };
   }, [parsedData]);

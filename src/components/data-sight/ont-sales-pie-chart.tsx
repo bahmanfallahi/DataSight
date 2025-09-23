@@ -59,13 +59,27 @@ export default function OntSalesPieChart({ parsedData }: { parsedData: ParsedDat
       totalRevenue += ontSaleValue;
     });
 
-    const chartData = Object.entries(salesMap)
-      .map(([name, totalSales], index) => ({
-        name: formatCurrency(Number(name)),
+    const sortedSales = Object.entries(salesMap)
+      .map(([name, totalSales]) => ({
+        name: Number(name),
         totalSales,
-        fill: COLORS[index % COLORS.length],
       }))
       .sort((a, b) => b.totalSales - a.totalSales);
+
+    let finalData;
+    if (sortedSales.length > 4) {
+        const topFour = sortedSales.slice(0, 4);
+        const otherTotal = sortedSales.slice(4).reduce((acc, curr) => acc + curr.totalSales, 0);
+        finalData = [...topFour, { name: -1, totalSales: otherTotal }]; // Use -1 as a special marker for "Other"
+    } else {
+        finalData = sortedSales;
+    }
+
+    const chartData = finalData.map((item, index) => ({
+      name: item.name === -1 ? 'Other' : formatCurrency(item.name),
+      totalSales: item.totalSales,
+      fill: COLORS[index % COLORS.length],
+    }));
 
     return { chartData, totalRevenue };
   }, [parsedData]);
