@@ -70,7 +70,7 @@ export default function ExpertSalesPieChart({ parsedData }: { parsedData: Parsed
       finalData = sortedSales;
     }
 
-    const chartData = finalData.map((item, index) => ({
+    const chartData: ExpertSalesData[] = finalData.map((item, index) => ({
       ...item,
       fill: COLORS[index % COLORS.length],
     }));

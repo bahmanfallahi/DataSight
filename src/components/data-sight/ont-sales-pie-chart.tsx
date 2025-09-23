@@ -75,7 +75,7 @@ export default function OntSalesPieChart({ parsedData }: { parsedData: ParsedDat
         finalData = sortedSales;
     }
 
-    const chartData = finalData.map((item, index) => ({
+    const chartData: OntSalesData[] = finalData.map((item, index) => ({
       name: item.name === -1 ? 'Other' : formatCurrency(item.name),
       totalSales: item.totalSales,
       fill: COLORS[index % COLORS.length],
