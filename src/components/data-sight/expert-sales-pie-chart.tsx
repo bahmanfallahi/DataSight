@@ -121,7 +121,6 @@ export default function ExpertSalesPieChart({ parsedData }: { parsedData: Parsed
                 labelLine={false}
                 label={({ percent }) => `${(percent * 100).toFixed(0)}%`}
                 >
-                    <Cell key={`cell-total`} fill="var(--color-total)" />
                     {chartData.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={entry.fill} />
                     ))}
