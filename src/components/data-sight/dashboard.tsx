@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { File as FileIcon } from 'lucide-react';
 import AgentSalesTable from './agent-sales-table';
 import DateBasedSalesStats from './date-based-sales-stats';
+import SalesOverTimeChart from './sales-over-time-chart';
 
 interface DashboardProps {
   csvData: string;
@@ -38,11 +39,13 @@ export default function Dashboard({
       
       <DateBasedSalesStats parsedData={parsedData} />
 
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <SalesOverTimeChart parsedData={parsedData} />
+        <Visualizer parsedData={parsedData} columnAnalysis={columnAnalysis} />
+      </div>
+
       <div className="grid gap-8 lg:grid-cols-3">
-        <div className="lg:col-span-2">
-           <Visualizer parsedData={parsedData} columnAnalysis={columnAnalysis} />
-        </div>
-        <div className="lg:col-span-1">
+        <div className="lg:col-span-3">
           <AiAnalysis csvData={csvData} />
         </div>
       </div>
