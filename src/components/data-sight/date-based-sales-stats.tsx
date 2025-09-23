@@ -37,7 +37,7 @@ const StatCard = ({
     description: string,
     className?: string
 }) => (
-    <Card className="bg-card/50 shadow-sm border-0">
+    <Card className="bg-muted/50 shadow-sm border-0">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className={cn("text-sm font-medium", className)}>{title}</CardTitle>
             <Icon className={cn("h-4 w-4 text-muted-foreground", className)} />
