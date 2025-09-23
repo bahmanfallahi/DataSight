@@ -132,38 +132,6 @@ export default function SummaryCards({ parsedData, columnAnalysis }: SummaryCard
 
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-      <Card className="group transition-colors hover:bg-primary hover:text-primary-foreground">
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Total Rows</CardTitle>
-          <Table className="h-4 w-4 text-muted-foreground group-hover:text-primary-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">{parsedData.data.length.toLocaleString()}</div>
-          <p className="text-xs text-muted-foreground group-hover:text-primary-foreground/80">in the dataset</p>
-        </CardContent>
-      </Card>
-      <Card className="group transition-colors hover:bg-primary hover:text-primary-foreground">
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Number of Columns</CardTitle>
-          <Columns className="h-4 w-4 text-muted-foreground group-hover:text-primary-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">{parsedData.headers.length}</div>
-          <p className="text-xs text-muted-foreground group-hover:text-primary-foreground/80">features analyzed</p>
-        </CardContent>
-      </Card>
-      {fiberSaleTotal !== null && (
-        <Card className="group transition-colors hover:bg-primary hover:text-primary-foreground">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Fiber Sale</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground group-hover:text-primary-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{formatCurrency(fiberSaleTotal)}</div>
-            <p className="text-xs text-muted-foreground group-hover:text-primary-foreground/80">Sum of "Fiber sale"</p>
-          </CardContent>
-        </Card>
-      )}
       {ontSaleTotal !== null && (
         <Card className="group transition-colors hover:bg-primary hover:text-primary-foreground">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -173,6 +141,18 @@ export default function SummaryCards({ parsedData, columnAnalysis }: SummaryCard
           <CardContent>
             <div className="text-2xl font-bold">{formatCurrency(ontSaleTotal)}</div>
             <p className="text-xs text-muted-foreground group-hover:text-primary-foreground/80">Sum of "ont sale"</p>
+          </CardContent>
+        </Card>
+      )}
+      {fiberSaleTotal !== null && (
+        <Card className="group transition-colors hover:bg-primary hover:text-primary-foreground">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Fiber Sale</CardTitle>
+            <DollarSign className="h-4 w-4 text-muted-foreground group-hover:text-primary-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{formatCurrency(fiberSaleTotal)}</div>
+            <p className="text-xs text-muted-foreground group-hover:text-primary-foreground/80">Sum of "Fiber sale"</p>
           </CardContent>
         </Card>
       )}
