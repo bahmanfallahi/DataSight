@@ -18,13 +18,7 @@ interface ExpertSalesData {
   fill: string;
 }
 
-const COLORS = [
-  'hsl(var(--chart-1))',
-  'hsl(var(--chart-2))',
-  'hsl(var(--chart-3))',
-  'hsl(var(--chart-4))',
-  'hsl(var(--chart-5))',
-];
+const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
 
 export default function ExpertSalesPieChart({ parsedData }: { parsedData: ParsedData }) {
   const { chartData, totalRevenue } = useMemo(() => {
@@ -136,7 +130,7 @@ export default function ExpertSalesPieChart({ parsedData }: { parsedData: Parsed
             {chartData.map((item, index) => (
                 <div key={index} className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                        <span className="h-2 w-2 rounded-full" style={{ backgroundColor: item.fill }} />
+                        <span className="h-2 w-2 rounded-full" style={{ backgroundColor: COLORS[index % COLORS.length] }} />
                         <span>{item.name}</span>
                     </div>
                     <span>{((item.totalSales / totalRevenue) * 100).toFixed(1)}%</span>

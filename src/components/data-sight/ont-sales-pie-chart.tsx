@@ -18,13 +18,7 @@ interface OntSalesData {
   fill: string;
 }
 
-const COLORS = [
-  'hsl(var(--chart-1))',
-  'hsl(var(--chart-2))',
-  'hsl(var(--chart-3))',
-  'hsl(var(--chart-4))',
-  'hsl(var(--chart-5))',
-];
+const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
 
 const formatCurrency = (value: number) => {
     return '[T] ' + new Intl.NumberFormat('en-US', {
@@ -142,7 +136,7 @@ export default function OntSalesPieChart({ parsedData }: { parsedData: ParsedDat
             {chartData.map((item, index) => (
                 <div key={index} className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                        <span className="h-2 w-2 rounded-full" style={{ backgroundColor: item.fill }} />
+                        <span className="h-2 w-2 rounded-full" style={{ backgroundColor: COLORS[index % COLORS.length] }} />
                         <span>ONT: {item.name}</span>
                     </div>
                     <span>{((item.totalSales / totalRevenue) * 100).toFixed(1)}%</span>
