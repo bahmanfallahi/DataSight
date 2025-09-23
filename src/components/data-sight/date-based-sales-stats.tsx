@@ -37,7 +37,7 @@ const StatCard = ({
     description: string,
     className?: string
 }) => (
-    <Card className={cn("bg-transparent shadow-none", className)}>
+    <Card className={cn("bg-card/50 shadow-sm border-0", className)}>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">{title}</CardTitle>
             <Icon className="h-4 w-4 text-muted-foreground" />
@@ -168,7 +168,7 @@ export default function DateBasedSalesStats({ parsedData }: { parsedData: Parsed
                         title="Best Selling Day"
                         value={bestDay.date}
                         description={`with ${formatCurrency(bestDay.total)} in sales`}
-                        className="border-green-500/50"
+                        className="text-green-500"
                     />
                 )}
                 {worstDay && (
@@ -177,7 +177,7 @@ export default function DateBasedSalesStats({ parsedData }: { parsedData: Parsed
                         title="Weakest Selling Day"
                         value={worstDay.date}
                         description={`with ${formatCurrency(worstDay.total)} in sales`}
-                        className="border-red-500/50"
+                        className="text-red-500"
                     />
                 )}
                 {bestWeek && (
@@ -186,7 +186,7 @@ export default function DateBasedSalesStats({ parsedData }: { parsedData: Parsed
                         title="Best Selling Week"
                         value={`${getOrdinal(bestWeek.week)} Week`}
                         description={`with ${formatCurrency(bestWeek.total)} in sales`}
-                        className="border-green-500/50"
+                        className="text-green-500"
                     />
                 )}
                 {worstWeek && (
@@ -195,7 +195,7 @@ export default function DateBasedSalesStats({ parsedData }: { parsedData: Parsed
                         title="Weakest Selling Week"
                         value={`${getOrdinal(worstWeek.week)} Week`}
                         description={`with ${formatCurrency(worstWeek.total)} in sales`}
-                        className="border-red-500/50"
+                        className="text-red-500"
                     />
                 )}
             </CardContent>
