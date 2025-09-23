@@ -37,16 +37,15 @@ export default function Dashboard({
       <AgentSalesTable parsedData={parsedData} />
       
       <DateBasedSalesStats parsedData={parsedData} />
-
-      <SalesOverTimeChart parsedData={parsedData} />
       
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <ExpertSalesPieChart parsedData={parsedData} />
-        <OntSalesPieChart parsedData={parsedData} />
+        <SalesOverTimeChart parsedData={parsedData} />
+        <Visualizer parsedData={parsedData} columnAnalysis={columnAnalysis} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-         <Visualizer parsedData={parsedData} columnAnalysis={columnAnalysis} />
+        <ExpertSalesPieChart parsedData={parsedData} />
+        <OntSalesPieChart parsedData={parsedData} />
       </div>
       
       <div>
