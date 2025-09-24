@@ -68,7 +68,6 @@ const CustomizedContent = (props: any) => {
                 ry={4}
                 style={{
                     fill: COLORS[index % COLORS.length],
-                    stroke: 'none',
                 }}
             />
             {canDisplayText && (
