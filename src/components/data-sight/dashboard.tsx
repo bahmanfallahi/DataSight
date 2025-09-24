@@ -36,24 +36,23 @@ export default function Dashboard({
 
       <SummaryCards parsedData={parsedData} columnAnalysis={columnAnalysis} />
       
-      <Card>
-        <CardHeader>
-            <div className="flex items-center gap-2">
-                <CalendarClock className="h-5 w-5" />
-                <CardTitle>Date-Based Sales Analysis</CardTitle>
-            </div>
-            <CardDescription>Key sales metrics based on daily and weekly performance.</CardDescription>
-        </CardHeader>
-        <CardContent>
-            <DateBasedSalesStats parsedData={parsedData} />
-        </CardContent>
-      </Card>
-
-
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <SalesOverTimeChart parsedData={parsedData} />
+        <Card>
+          <CardHeader>
+              <div className="flex items-center gap-2">
+                  <CalendarClock className="h-5 w-5" />
+                  <CardTitle>Date-Based Sales Analysis</CardTitle>
+              </div>
+              <CardDescription>Key sales metrics based on daily and weekly performance.</CardDescription>
+          </CardHeader>
+          <CardContent>
+              <DateBasedSalesStats parsedData={parsedData} />
+          </CardContent>
+        </Card>
         <Visualizer parsedData={parsedData} columnAnalysis={columnAnalysis} />
       </div>
+
+      <SalesOverTimeChart parsedData={parsedData} />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <ExpertSalesPieChart parsedData={parsedData} />
