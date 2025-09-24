@@ -20,10 +20,12 @@ const COLORS = ["#F89D2A", "#3D5186", "#586786", "#8D9DAE", "#AAB5C2", "#C5CED6"
 const CustomTooltip = ({ active, payload }: any) => {
   if (active && payload && payload.length) {
     const data = payload[0].payload;
+    const totalRevenue = payload[0].payload.root.children.reduce((acc: number, curr: any) => acc + curr.size, 0);
+    const percentage = ((data.size / totalRevenue) * 100).toFixed(1);
     return (
       <div className="bg-background border border-border shadow-lg rounded-lg p-3 text-sm">
         <p className="font-bold text-foreground">{data.name}</p>
-        <p className="text-muted-foreground">Total Revenue: {formatCurrency(data.size)}</p>
+        <p className="text-muted-foreground">Total Revenue: {formatCurrency(data.size)} ({percentage}%)</p>
       </div>
     );
   }
@@ -31,10 +33,16 @@ const CustomTooltip = ({ active, payload }: any) => {
 };
 
 const CustomizedContent = (props: any) => {
-    const { depth, x, y, width, height, index, name } = props;
+    const { x, y, width, height, index, name, size, root } = props;
     
-    // Don't render text if the block is too small
-    const canDisplayText = width > 50 && height > 25;
+    const canDisplayText = width > 50 && height > 40;
+
+    const totalRevenue = useMemo(() => {
+        if (!root || !root.children) return 0;
+        return root.children.reduce((acc: number, curr: any) => acc + curr.size, 0);
+    }, [root]);
+    
+    const percentage = totalRevenue > 0 ? ((size / totalRevenue) * 100).toFixed(1) : 0;
 
     return (
         <g>
@@ -56,17 +64,17 @@ const CustomizedContent = (props: any) => {
                         width: '100%', 
                         height: '100%', 
                         display: 'flex', 
+                        flexDirection: 'column',
                         alignItems: 'center', 
                         justifyContent: 'center',
                         padding: '2px',
                         color: '#fff',
                         textAlign: 'center',
                         fontSize: '12px',
-                        fontWeight: 500,
-                        wordBreak: 'break-word',
-                        lineHeight: 1.2
+                        lineHeight: 1.3
                       }}>
-                         {name}
+                         <div style={{ fontWeight: 500, wordBreak: 'break-word' }}>{name}</div>
+                         <div style={{ fontSize: '11px', opacity: 0.8 }}>{percentage}%</div>
                      </div>
                 </foreignObject>
             )}
@@ -76,16 +84,17 @@ const CustomizedContent = (props: any) => {
 
 export default function ChannelTreemap({ parsedData }: { parsedData: ParsedData }) {
     const chartRef = useRef<HTMLDivElement>(null);
-    const treemapData = useMemo(() => {
+    const { treemapData, totalRevenue } = useMemo(() => {
         const channelHeader = parsedData.headers.find(h => h.toLowerCase() === 'how to meet');
         const fiberSaleHeader = parsedData.headers.find(h => h.toLowerCase() === 'fiber sale');
         const ontSaleHeader = parsedData.headers.find(h => h.toLowerCase() === 'ont sale');
 
         if (!channelHeader || !fiberSaleHeader || !ontSaleHeader) {
-            return [];
+            return { treemapData: [], totalRevenue: 0 };
         }
 
         const channelSales: Record<string, number> = {};
+        let totalRevenue = 0;
 
         parsedData.data.forEach(row => {
             const channel = row[channelHeader];
@@ -100,12 +109,15 @@ export default function ChannelTreemap({ parsedData }: { parsedData: ParsedData 
             } else {
                 channelSales[channel] = totalSale;
             }
+            totalRevenue += totalSale;
         });
-
-        return Object.entries(channelSales).map(([name, size]) => ({
+        
+        const data = Object.entries(channelSales).map(([name, size]) => ({
             name,
             size,
         })).sort((a,b) => b.size - a.size);
+
+        return { treemapData: data, totalRevenue };
     }, [parsedData]);
     
     if (treemapData.length === 0) {
