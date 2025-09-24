@@ -3,10 +3,11 @@
 
 import { useMemo } from 'react';
 import type { ParsedData } from '@/lib/data-utils';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { TrendingUp, TrendingDown, Calendar, CalendarDays } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { TrendingUp, TrendingDown } from 'lucide-react';
 import { parse as parseJalali, differenceInWeeks, startOfDay } from 'date-fns-jalali';
 import { cn } from '@/lib/utils';
+import { Area, AreaChart, ResponsiveContainer } from 'recharts';
 
 const formatCurrency = (value: number) => {
     const formattedValue = new Intl.NumberFormat('en-US', {
@@ -29,34 +30,64 @@ const StatCard = ({
     title,
     value,
     description,
-    className
+    colorClass,
+    chartData
 }: {
     icon: React.ElementType,
     title: string,
     value: string,
     description: string,
-    className?: string
-}) => (
-    <Card className="bg-muted/50 shadow-sm border-0">
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className={cn("text-sm font-medium", className)}>{title}</CardTitle>
-            <Icon className={cn("h-4 w-4 text-muted-foreground", className)} />
-        </CardHeader>
-        <CardContent>
-            <div className="text-2xl font-bold">{value}</div>
-            <p className="text-xs text-muted-foreground">{description}</p>
-        </CardContent>
-    </Card>
-)
+    colorClass?: string,
+    chartData: { sales: number }[];
+}) => {
+    const chartColor = colorClass === 'text-green-500' ? 'hsl(var(--chart-2))' : 'hsl(var(--chart-4))';
+
+    return (
+        <Card className="bg-muted/50 shadow-sm border-0 flex flex-col">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className={cn("text-sm font-medium", colorClass)}>{title}</CardTitle>
+                <Icon className={cn("h-4 w-4 text-muted-foreground", colorClass)} />
+            </CardHeader>
+            <CardContent>
+                <div className="text-2xl font-bold">{value}</div>
+                <p className="text-xs text-muted-foreground">{description}</p>
+            </CardContent>
+            {chartData.length > 0 && (
+                 <CardContent className="flex-1 flex flex-col justify-end pb-2">
+                    <div className="h-[50px] -mx-6 -mb-2">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <AreaChart data={chartData}>
+                                <defs>
+                                    <linearGradient id={`color-${title.replace(/\s+/g, '-')}`} x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="5%" stopColor={chartColor} stopOpacity={0.5}/>
+                                        <stop offset="95%" stopColor={chartColor} stopOpacity={0}/>
+                                    </linearGradient>
+                                </defs>
+                                <Area
+                                    type="monotone"
+                                    dataKey="sales"
+                                    stroke={chartColor}
+                                    strokeWidth={2}
+                                    fillOpacity={1}
+                                    fill={`url(#color-${title.replace(/\s+/g, '-')})`}
+                                    />
+                            </AreaChart>
+                        </ResponsiveContainer>
+                    </div>
+                </CardContent>
+            )}
+        </Card>
+    )
+}
 
 export default function DateBasedSalesStats({ parsedData }: { parsedData: ParsedData }) {
-    const { bestDay, worstDay, bestWeek, worstWeek } = useMemo(() => {
+    const { bestDay, worstDay, bestWeek, worstWeek, dailySalesForChart } = useMemo(() => {
         const dateHeader = parsedData.headers.find(h => h.toLowerCase() === 'date');
         const fiberSaleHeader = parsedData.headers.find(h => h.toLowerCase() === 'fiber sale');
         const ontSaleHeader = parsedData.headers.find(h => h.toLowerCase() === 'ont sale');
 
         if (!dateHeader || !fiberSaleHeader || !ontSaleHeader) {
-            return { bestDay: null, worstDay: null, bestWeek: null, worstWeek: null };
+            return { bestDay: null, worstDay: null, bestWeek: null, worstWeek: null, dailySalesForChart: [] };
         }
         
         // --- Sales by Day ---
@@ -72,6 +103,17 @@ export default function DateBasedSalesStats({ parsedData }: { parsedData: Parsed
                 salesByDay[dateStr] = totalSale;
             }
         });
+
+        const sortedDailySales = Object.entries(salesByDay)
+            .map(([dateStr, sales]) => {
+                try {
+                    return { date: parseJalali(dateStr, 'yyyy/MM/dd', new Date()), sales };
+                } catch { return null; }
+            })
+            .filter((d): d is { date: Date; sales: number } => d !== null)
+            .sort((a,b) => a.date.getTime() - b.date.getTime());
+        
+        const dailySalesForChart = sortedDailySales.map(d => ({ sales: d.sales }));
 
         let bestDay = { date: '', total: 0 };
         let worstDay = { date: '', total: Infinity };
@@ -101,7 +143,8 @@ export default function DateBasedSalesStats({ parsedData }: { parsedData: Parsed
                 bestDay: bestDay.date ? bestDay : null, 
                 worstDay: worstDay.date && worstDay.total !== Infinity ? worstDay : null,
                 bestWeek: null, 
-                worstWeek: null 
+                worstWeek: null,
+                dailySalesForChart: []
             };
         }
 
@@ -143,6 +186,7 @@ export default function DateBasedSalesStats({ parsedData }: { parsedData: Parsed
             worstDay: worstDay.date && worstDay.total !== Infinity ? worstDay : null,
             bestWeek: bestWeek.week !== -1 ? bestWeek : null,
             worstWeek: worstWeek.week !== -1 ? worstWeek : null,
+            dailySalesForChart
         };
     }, [parsedData]);
     
@@ -151,54 +195,47 @@ export default function DateBasedSalesStats({ parsedData }: { parsedData: Parsed
     }
 
     return (
-        <Card className="shadow-none border border-dashed">
-            <CardHeader>
-                <div className="flex items-center gap-2">
-                    <CalendarDays className="h-5 w-5" />
-                    <CardTitle>Date-Based Sales Analysis</CardTitle>
-                </div>
-                <CardDescription>
-                    Analysis of sales performance based on daily and weekly trends.
-                </CardDescription>
-            </CardHeader>
-            <CardContent className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                {bestDay && (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            {bestDay && (
+                <StatCard
+                    icon={TrendingUp}
+                    title="Best Selling Day"
+                    value={bestDay.date}
+                    description={`with ${formatCurrency(bestDay.total)} in sales`}
+                    colorClass="text-green-500"
+                    chartData={dailySalesForChart}
+                />
+            )}
+            {worstDay && (
+                <StatCard
+                    icon={TrendingDown}
+                    title="Weakest Selling Day"
+                    value={worstDay.date}
+                    description={`with ${formatCurrency(worstDay.total)} in sales`}
+                    colorClass="text-red-500"
+                    chartData={dailySalesForChart}
+                />
+            )}
+            {bestWeek && (
                     <StatCard
-                        icon={TrendingUp}
-                        title="Best Selling Day"
-                        value={bestDay.date}
-                        description={`with ${formatCurrency(bestDay.total)} in sales`}
-                        className="text-green-500"
-                    />
-                )}
-                {worstDay && (
-                    <StatCard
-                        icon={TrendingDown}
-                        title="Weakest Selling Day"
-                        value={worstDay.date}
-                        description={`with ${formatCurrency(worstDay.total)} in sales`}
-                        className="text-red-500"
-                    />
-                )}
-                {bestWeek && (
-                     <StatCard
-                        icon={TrendingUp}
-                        title="Best Selling Week"
-                        value={`${getOrdinal(bestWeek.week)} Week`}
-                        description={`with ${formatCurrency(bestWeek.total)} in sales`}
-                        className="text-green-500"
-                    />
-                )}
-                {worstWeek && (
-                    <StatCard
-                        icon={TrendingDown}
-                        title="Weakest Selling Week"
-                        value={`${getOrdinal(worstWeek.week)} Week`}
-                        description={`with ${formatCurrency(worstWeek.total)} in sales`}
-                        className="text-red-500"
-                    />
-                )}
-            </CardContent>
-        </Card>
+                    icon={TrendingUp}
+                    title="Best Selling Week"
+                    value={`${getOrdinal(bestWeek.week)} Week`}
+                    description={`with ${formatCurrency(bestWeek.total)} in sales`}
+                    colorClass="text-green-500"
+                    chartData={dailySalesForChart}
+                />
+            )}
+            {worstWeek && (
+                <StatCard
+                    icon={TrendingDown}
+                    title="Weakest Selling Week"
+                    value={`${getOrdinal(worstWeek.week)} Week`}
+                    description={`with ${formatCurrency(worstWeek.total)} in sales`}
+                    colorClass="text-red-500"
+                    chartData={dailySalesForChart}
+                />
+            )}
+        </div>
     );
 }
