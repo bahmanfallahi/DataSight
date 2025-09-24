@@ -32,15 +32,7 @@ const CustomTooltip = ({ active, payload }: any) => {
 
 const CustomizedContent = (props: any) => {
     const { root, depth, x, y, width, height, index, payload, rank, name } = props;
-    const padding = 5; // Creates the gap
-
-    if (width < padding * 2 || height < padding * 2) {
-        return null;
-    }
     
-    const contentWidth = width - padding;
-    const contentHeight = height - padding;
-
     if (width < 30 || height < 30) {
         return null;
     }
@@ -48,18 +40,18 @@ const CustomizedContent = (props: any) => {
     return (
         <g>
             <rect
-                x={x + padding / 2}
-                y={y + padding / 2}
-                width={contentWidth}
-                height={contentHeight}
-                rx={4} // Rounded corners
+                x={x}
+                y={y}
+                width={width}
+                height={height}
+                rx={4} 
                 ry={4}
                 style={{
                     fill: COLORS[index % COLORS.length],
                     stroke: 'none',
                 }}
             />
-            <foreignObject x={x + padding} y={y + padding} width={contentWidth-padding} height={contentHeight-padding}>
+            <foreignObject x={x + 2} y={y + 2} width={width - 4} height={height - 4}>
                  <div style={{ 
                     width: '100%', 
                     height: '100%', 
@@ -154,13 +146,13 @@ export default function ChannelTreemap({ parsedData }: { parsedData: ParsedData 
                 <ChartDownloader chartRef={chartRef} />
             </CardHeader>
             <CardContent>
-                <ResponsiveContainer width="100%" height={350} style={{ backgroundColor: 'white' }}>
+                <ResponsiveContainer width="100%" height={350}>
                     <Treemap
                         data={treemapData}
                         dataKey="size"
                         ratio={4 / 3}
-                        stroke="none"
-                        fill="#8884d8"
+                        stroke="#ffffff"
+                        strokeWidth={2}
                         content={<CustomizedContent />}
                     >
                       <Tooltip content={<CustomTooltip />} />
