@@ -10,6 +10,7 @@ import DateBasedSalesStats from './date-based-sales-stats';
 import SalesOverTimeChart from './sales-over-time-chart';
 import ExpertSalesPieChart from './expert-sales-pie-chart';
 import OntSalesPieChart from './ont-sales-pie-chart';
+import AreaSalesPieChart from './area-sales-pie-chart';
 
 interface DashboardProps {
   parsedData: ParsedData;
@@ -41,9 +42,10 @@ export default function Dashboard({
         <Visualizer parsedData={parsedData} columnAnalysis={columnAnalysis} />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <ExpertSalesPieChart parsedData={parsedData} />
         <OntSalesPieChart parsedData={parsedData} />
+        <AreaSalesPieChart parsedData={parsedData} />
       </div>
       
       <AgentSalesTable parsedData={parsedData} />
