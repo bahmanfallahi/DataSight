@@ -4,7 +4,7 @@ import ColumnProfiler from '@/components/data-sight/column-profiler';
 import SummaryCards from '@/components/data-sight/summary-cards';
 import Visualizer from '@/components/data-sight/visualizer';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { File as FileIcon, CalendarClock } from 'lucide-react';
+import { File as FileIcon, CalendarClock, Download } from 'lucide-react';
 import AgentSalesTable from './agent-sales-table';
 import DateBasedSalesStats from './date-based-sales-stats';
 import SalesOverTimeChart from './sales-over-time-chart';
@@ -13,6 +13,8 @@ import OntSalesPieChart from './ont-sales-pie-chart';
 import AreaSalesPieChart from './area-sales-pie-chart';
 import AreaSalesTable from './area-sales-table';
 import ChannelTreemap from './channel-treemap';
+import { useRef } from 'react';
+import ChartDownloader from './chart-downloader';
 
 interface DashboardProps {
   parsedData: ParsedData;
@@ -25,6 +27,7 @@ export default function Dashboard({
   columnAnalysis,
   fileName,
 }: DashboardProps) {
+  const dateStatsRef = useRef<HTMLDivElement>(null);
   return (
     <div className="space-y-6">
       <div className="space-y-2">
@@ -38,13 +41,16 @@ export default function Dashboard({
       <SummaryCards parsedData={parsedData} columnAnalysis={columnAnalysis} />
       
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-              <div className="flex items-center gap-2">
-                  <CalendarClock className="h-5 w-5" />
-                  <CardTitle>Date-Based Sales Analysis</CardTitle>
+        <Card ref={dateStatsRef}>
+          <CardHeader className="flex flex-row items-start justify-between">
+              <div>
+                  <div className="flex items-center gap-2">
+                      <CalendarClock className="h-5 w-5" />
+                      <CardTitle>Date-Based Sales Analysis</CardTitle>
+                  </div>
+                  <CardDescription>Key sales metrics based on daily and weekly performance.</CardDescription>
               </div>
-              <CardDescription>Key sales metrics based on daily and weekly performance.</CardDescription>
+              <ChartDownloader chartRef={dateStatsRef} />
           </CardHeader>
           <CardContent>
               <DateBasedSalesStats parsedData={parsedData} />

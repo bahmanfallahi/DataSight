@@ -1,5 +1,5 @@
 'use client';
-import { useMemo } from 'react';
+import { useMemo, useRef } from 'react';
 import {
   Card,
   CardContent,
@@ -17,6 +17,7 @@ import {
 } from '@/components/ui/table';
 import type { ParsedData } from '@/lib/data-utils';
 import { MapPin } from 'lucide-react';
+import ChartDownloader from './chart-downloader';
 
 interface AreaSalesTableProps {
   parsedData: ParsedData;
@@ -39,6 +40,7 @@ const formatCurrency = (value: number) => {
 };
 
 export default function AreaSalesTable({ parsedData }: AreaSalesTableProps) {
+  const chartRef = useRef<HTMLDivElement>(null);
   const areaSales = useMemo<AreaSales[]>(() => {
     const areaHeader = parsedData.headers.find(h => h.toLowerCase() === 'area');
     const fiberSaleHeader = parsedData.headers.find(h => h.toLowerCase() === 'fiber sale');
@@ -80,15 +82,18 @@ export default function AreaSalesTable({ parsedData }: AreaSalesTableProps) {
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center gap-2">
-            <MapPin className="h-5 w-5" />
-            <CardTitle>Area Sales Performance</CardTitle>
+    <Card ref={chartRef}>
+      <CardHeader className="flex flex-row items-start justify-between">
+        <div>
+            <div className="flex items-center gap-2">
+                <MapPin className="h-5 w-5" />
+                <CardTitle>Area Sales Performance</CardTitle>
+            </div>
+            <CardDescription>
+              A breakdown of sales performance by geographical area.
+            </CardDescription>
         </div>
-        <CardDescription>
-          A breakdown of sales performance by geographical area.
-        </CardDescription>
+        <ChartDownloader chartRef={chartRef} />
       </CardHeader>
       <CardContent>
         <Table>

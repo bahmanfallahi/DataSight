@@ -1,5 +1,5 @@
 'use client';
-import { useMemo } from 'react';
+import { useMemo, useRef } from 'react';
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import {
   Card,
@@ -11,6 +11,7 @@ import {
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import type { ParsedData } from '@/lib/data-utils';
 import { MapPin } from 'lucide-react';
+import ChartDownloader from './chart-downloader';
 
 interface AreaSalesData {
   name: string;
@@ -21,6 +22,7 @@ interface AreaSalesData {
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#6366f1', '#ec4899'];
 
 export default function AreaSalesPieChart({ parsedData }: { parsedData: ParsedData }) {
+  const chartRef = useRef<HTMLDivElement>(null);
   const { chartData, totalCount } = useMemo(() => {
     const areaHeader = parsedData.headers.find(h => h.toLowerCase() === 'area');
 
@@ -85,13 +87,16 @@ export default function AreaSalesPieChart({ parsedData }: { parsedData: ParsedDa
   }
 
   return (
-    <Card className="flex flex-col">
-      <CardHeader>
-        <div className="flex items-center gap-2">
-            <MapPin className="h-5 w-5" />
-            <CardTitle>Sales by Area</CardTitle>
+    <Card className="flex flex-col" ref={chartRef}>
+      <CardHeader className="flex flex-row items-start justify-between">
+        <div>
+            <div className="flex items-center gap-2">
+                <MapPin className="h-5 w-5" />
+                <CardTitle>Sales by Area</CardTitle>
+            </div>
+            <CardDescription>Sales distribution by geographical area</CardDescription>
         </div>
-        <CardDescription>Sales distribution by geographical area</CardDescription>
+        <ChartDownloader chartRef={chartRef} />
       </CardHeader>
       <CardContent className="flex-1 pb-0">
         <ChartContainer

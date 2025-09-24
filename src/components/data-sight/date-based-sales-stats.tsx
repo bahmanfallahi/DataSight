@@ -1,13 +1,13 @@
-// src/components/data-sight/date-based-sales-stats.tsx
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useRef } from 'react';
 import type { ParsedData } from '@/lib/data-utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { TrendingUp, TrendingDown } from 'lucide-react';
 import { parse as parseJalali, differenceInWeeks, startOfDay } from 'date-fns-jalali';
 import { cn } from '@/lib/utils';
 import { Area, AreaChart, ResponsiveContainer } from 'recharts';
+import ChartDownloader from './chart-downloader';
 
 const formatCurrency = (value: number) => {
     const formattedValue = new Intl.NumberFormat('en-US', {
@@ -53,20 +53,19 @@ const StatCard = ({
 }
 
 export default function DateBasedSalesStats({ parsedData }: { parsedData: ParsedData }) {
+    const chartRef = useRef<HTMLDivElement>(null);
     const { 
         bestDay, 
         worstDay, 
         bestWeek, 
         worstWeek, 
-        dailySalesForChart,
-        weeklySalesForChart,
     } = useMemo(() => {
         const dateHeader = parsedData.headers.find(h => h.toLowerCase() === 'date');
         const fiberSaleHeader = parsedData.headers.find(h => h.toLowerCase() === 'fiber sale');
         const ontSaleHeader = parsedData.headers.find(h => h.toLowerCase() === 'ont sale');
 
         if (!dateHeader || !fiberSaleHeader || !ontSaleHeader) {
-            return { bestDay: null, worstDay: null, bestWeek: null, worstWeek: null, dailySalesForChart: [], weeklySalesForChart: [] };
+            return { bestDay: null, worstDay: null, bestWeek: null, worstWeek: null };
         }
         
         const salesByDay: Record<string, number> = {};
@@ -91,8 +90,6 @@ export default function DateBasedSalesStats({ parsedData }: { parsedData: Parsed
             .filter((d): d is { date: Date; sales: number } => d !== null)
             .sort((a,b) => a.date.getTime() - b.date.getTime());
         
-        const dailySalesForChart = sortedDailySales.map(day => ({ sales: day.sales }));
-
         let bestDay = { date: '', total: -Infinity };
         let worstDay = { date: '', total: Infinity };
 
@@ -108,7 +105,6 @@ export default function DateBasedSalesStats({ parsedData }: { parsedData: Parsed
             }
         });
         
-        // --- Sales by Week ---
         const validDates = sortedDailySales.map(d => d.date);
         if (validDates.length === 0) {
             return { 
@@ -116,8 +112,6 @@ export default function DateBasedSalesStats({ parsedData }: { parsedData: Parsed
                 worstDay: worstDay.total !== Infinity ? worstDay : null,
                 bestWeek: null, 
                 worstWeek: null,
-                dailySalesForChart: [],
-                weeklySalesForChart: [],
             };
         }
 
@@ -140,8 +134,6 @@ export default function DateBasedSalesStats({ parsedData }: { parsedData: Parsed
 
         const sortedWeeklySales = Object.values(salesByWeek).sort((a,b) => a.weekNum - b.weekNum);
 
-        const weeklySalesForChart = sortedWeeklySales.map(week => ({ sales: week.total }));
-        
         let bestWeek = { week: -1, total: -1 };
         let worstWeek = { week: -1, total: Infinity };
 
@@ -161,8 +153,6 @@ export default function DateBasedSalesStats({ parsedData }: { parsedData: Parsed
             worstDay: worstDay.total !== Infinity ? worstDay : null,
             bestWeek: bestWeek.week !== -1 ? bestWeek : null,
             worstWeek: worstWeek.week !== -1 ? worstWeek : null,
-            dailySalesForChart: dailySalesForChart,
-            weeklySalesForChart: weeklySalesForChart,
         };
     }, [parsedData]);
     
@@ -171,6 +161,7 @@ export default function DateBasedSalesStats({ parsedData }: { parsedData: Parsed
     }
 
     return (
+        <div ref={chartRef}>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {bestDay && (
                 <StatCard
@@ -208,6 +199,7 @@ export default function DateBasedSalesStats({ parsedData }: { parsedData: Parsed
                     colorClass="text-red-500"
                 />
             )}
+        </div>
         </div>
     );
 }

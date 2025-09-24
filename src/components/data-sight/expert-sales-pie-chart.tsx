@@ -1,5 +1,5 @@
 'use client';
-import { useMemo } from 'react';
+import { useMemo, useRef } from 'react';
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import {
   Card,
@@ -11,6 +11,7 @@ import {
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import type { ParsedData } from '@/lib/data-utils';
 import { Users } from 'lucide-react';
+import ChartDownloader from './chart-downloader';
 
 interface ExpertSalesData {
   name: string;
@@ -21,6 +22,7 @@ interface ExpertSalesData {
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#6366f1', '#ec4899'];
 
 export default function ExpertSalesPieChart({ parsedData }: { parsedData: ParsedData }) {
+  const chartRef = useRef<HTMLDivElement>(null);
   const { chartData, totalRevenue } = useMemo(() => {
     const agentHeader = parsedData.headers.find(h => h.toLowerCase() === 'agent');
     const fiberSaleHeader = parsedData.headers.find(h => h.toLowerCase() === 'fiber sale');
@@ -89,13 +91,16 @@ export default function ExpertSalesPieChart({ parsedData }: { parsedData: Parsed
   }
 
   return (
-    <Card className="flex flex-col">
-      <CardHeader>
-        <div className="flex items-center gap-2">
-            <Users className="h-5 w-5" />
-            <CardTitle>Expert Sales Share</CardTitle>
+    <Card className="flex flex-col" ref={chartRef}>
+      <CardHeader className="flex flex-row items-start justify-between">
+        <div>
+            <div className="flex items-center gap-2">
+                <Users className="h-5 w-5" />
+                <CardTitle>Expert Sales Share</CardTitle>
+            </div>
+            <CardDescription>Sales distribution by expert</CardDescription>
         </div>
-        <CardDescription>Sales distribution by expert</CardDescription>
+        <ChartDownloader chartRef={chartRef} />
       </CardHeader>
       <CardContent className="flex-1 pb-0">
         <ChartContainer

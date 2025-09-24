@@ -1,5 +1,5 @@
 'use client';
-import { useMemo } from 'react';
+import { useMemo, useRef } from 'react';
 import {
   Card,
   CardContent,
@@ -17,6 +17,7 @@ import {
 } from '@/components/ui/table';
 import type { ParsedData } from '@/lib/data-utils';
 import { User, DollarSign } from 'lucide-react';
+import ChartDownloader from './chart-downloader';
 
 interface AgentSalesTableProps {
   parsedData: ParsedData;
@@ -38,6 +39,7 @@ const formatCurrency = (value: number) => {
 };
 
 export default function AgentSalesTable({ parsedData }: AgentSalesTableProps) {
+  const chartRef = useRef<HTMLDivElement>(null);
   const agentSales = useMemo<AgentSales[]>(() => {
     const agentHeader = parsedData.headers.find(h => h.toLowerCase() === 'agent');
     const fiberSaleHeader = parsedData.headers.find(h => h.toLowerCase() === 'fiber sale');
@@ -78,15 +80,18 @@ export default function AgentSalesTable({ parsedData }: AgentSalesTableProps) {
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center gap-2">
-            <User className="h-5 w-5" />
-            <CardTitle>Agent Sales Performance</CardTitle>
+    <Card ref={chartRef}>
+      <CardHeader className="flex flex-row items-start justify-between">
+        <div>
+            <div className="flex items-center gap-2">
+                <User className="h-5 w-5" />
+                <CardTitle>Agent Sales Performance</CardTitle>
+            </div>
+            <CardDescription>
+              A breakdown of sales performance by each agent.
+            </CardDescription>
         </div>
-        <CardDescription>
-          A breakdown of sales performance by each agent.
-        </CardDescription>
+        <ChartDownloader chartRef={chartRef} />
       </CardHeader>
       <CardContent>
         <Table>

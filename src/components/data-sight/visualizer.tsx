@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
@@ -9,6 +9,7 @@ import type { ParsedData, ColumnAnalysis } from '@/lib/data-utils';
 import { Slider } from '@/components/ui/slider';
 import { Label } from '@/components/ui/label';
 import { AreaChart } from 'lucide-react';
+import ChartDownloader from './chart-downloader';
 
 const chartConfig = {
   count: { label: 'Count', color: 'hsl(var(--chart-1))' },
@@ -22,6 +23,7 @@ function formatNumber(num: number): string {
 }
 
 export default function Visualizer({ parsedData, columnAnalysis }: { parsedData: ParsedData; columnAnalysis: ColumnAnalysis[] }) {
+  const chartRef = useRef<HTMLDivElement>(null);
   const [distCol, setDistCol] = useState<string | undefined>(columnAnalysis.find(c => c.type === 'categorical' || c.type === 'numeric')?.name);
   const [binCount, setBinCount] = useState([10]);
 
@@ -78,13 +80,16 @@ export default function Visualizer({ parsedData, columnAnalysis }: { parsedData:
   }, [distCol, parsedData, columnAnalysis, binCount]);
 
   return (
-    <Card className="h-full shadow-none border">
-      <CardHeader>
-        <div className="flex items-center gap-2">
-            <AreaChart className="h-5 w-5" />
-            <CardTitle className="font-semibold">Data Distribution</CardTitle>
+    <Card className="h-full shadow-none border" ref={chartRef}>
+      <CardHeader className="flex flex-row items-start justify-between">
+        <div>
+            <div className="flex items-center gap-2">
+                <AreaChart className="h-5 w-5" />
+                <CardTitle className="font-semibold">Data Distribution</CardTitle>
+            </div>
+            <CardDescription>Analyze the distribution of values in your columns.</CardDescription>
         </div>
-        <CardDescription>Analyze the distribution of values in your columns.</CardDescription>
+        <ChartDownloader chartRef={chartRef} />
       </CardHeader>
       <CardContent>
         <div className="flex flex-col sm:flex-row gap-4 mb-4">

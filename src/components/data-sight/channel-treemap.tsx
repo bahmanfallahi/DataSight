@@ -1,10 +1,11 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useRef } from 'react';
 import { ResponsiveContainer, Treemap, Tooltip } from 'recharts';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import type { ParsedData } from '@/lib/data-utils';
 import { Waypoints } from 'lucide-react';
+import ChartDownloader from './chart-downloader';
 
 const formatCurrency = (value: number) => {
     return '[T] ' + new Intl.NumberFormat('en-US', {
@@ -55,7 +56,7 @@ const CustomizedContent = (props: any) => {
                 textAnchor="middle"
                 dominantBaseline="middle"
                 fill="#fff"
-                className="text-xs"
+                className="text-xs font-medium"
             >
                 {name}
             </text>
@@ -64,6 +65,7 @@ const CustomizedContent = (props: any) => {
 };
 
 export default function ChannelTreemap({ parsedData }: { parsedData: ParsedData }) {
+    const chartRef = useRef<HTMLDivElement>(null);
     const treemapData = useMemo(() => {
         const channelHeader = parsedData.headers.find(h => h.toLowerCase() === 'how to meet');
         const fiberSaleHeader = parsedData.headers.find(h => h.toLowerCase() === 'fiber sale');
@@ -118,15 +120,18 @@ export default function ChannelTreemap({ parsedData }: { parsedData: ParsedData 
     }
 
     return (
-        <Card>
-            <CardHeader>
-                <div className="flex items-center gap-2">
-                    <Waypoints className="h-5 w-5" />
-                    <CardTitle>Channel Effectiveness</CardTitle>
+        <Card ref={chartRef}>
+            <CardHeader className="flex flex-row items-start justify-between">
+                <div>
+                    <div className="flex items-center gap-2">
+                        <Waypoints className="h-5 w-5" />
+                        <CardTitle>Channel Effectiveness</CardTitle>
+                    </div>
+                    <CardDescription>
+                        A treemap visualizing sales contribution by acquisition channel.
+                    </CardDescription>
                 </div>
-                <CardDescription>
-                    A treemap visualizing sales contribution by acquisition channel.
-                </CardDescription>
+                <ChartDownloader chartRef={chartRef} />
             </CardHeader>
             <CardContent>
                 <ResponsiveContainer width="100%" height={350}>

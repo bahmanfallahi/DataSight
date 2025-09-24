@@ -1,12 +1,13 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis, ReferenceDot, ReferenceArea, Legend } from 'recharts';
 import type { ParsedData } from '@/lib/data-utils';
 import { parse as parseJalali, startOfWeek, endOfWeek, format as formatJalali } from 'date-fns-jalali';
 import { TrendingUp, Star, Ban } from 'lucide-react';
+import ChartDownloader from './chart-downloader';
 
 const formatCurrency = (value: number) => {
     return '[T] ' + new Intl.NumberFormat('en-US', {
@@ -24,6 +25,7 @@ const chartConfig = {
 };
 
 export default function SalesOverTimeChart({ parsedData }: { parsedData: ParsedData }) {
+  const chartRef = useRef<HTMLDivElement>(null);
   const { 
     salesData, 
     bestDay, 
@@ -146,15 +148,18 @@ export default function SalesOverTimeChart({ parsedData }: { parsedData: ParsedD
   }
 
   return (
-    <Card>
-        <CardHeader>
-            <div className="flex items-center gap-2">
-                <TrendingUp className="h-5 w-5" />
-                <CardTitle>Sales Over Time</CardTitle>
+    <Card ref={chartRef}>
+        <CardHeader className="flex flex-row items-start justify-between">
+            <div>
+                <div className="flex items-center gap-2">
+                    <TrendingUp className="h-5 w-5" />
+                    <CardTitle>Sales Over Time</CardTitle>
+                </div>
+                <CardDescription>
+                    A chart showing daily sales, with best and worst sales periods highlighted.
+                </CardDescription>
             </div>
-            <CardDescription>
-                A chart showing daily sales, with best and worst sales periods highlighted.
-            </CardDescription>
+            <ChartDownloader chartRef={chartRef} />
         </CardHeader>
         <CardContent>
             <ChartContainer config={chartConfig} className="h-[400px] w-full">
