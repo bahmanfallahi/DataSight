@@ -69,7 +69,7 @@ const CustomizedContent = (props: any) => {
                     padding: '2px'
                   }}>
                      <p style={{
-                         color: '#fff',
+                         color: 'rgb(255 255 255)',
                          textAlign: 'center',
                          fontSize: '12px',
                          fontWeight: 300,
