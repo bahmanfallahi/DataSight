@@ -15,7 +15,7 @@ const formatCurrency = (value: number) => {
     }).format(value);
 };
 
-const COLORS = ['#0d47a1', '#1565c0', '#1976d2', '#1e88e5', '#2196f3', '#42a5f5', '#64b5f6', '#90caf9', '#bbdefb', '#e3f2fd'];
+const COLORS = ['#0d47a1', '#1565c0', '#1976d2', '#1e88e5', '#2196f3', '#42a5f5', '#64b5f6', '#90caf9', '#bbdefb', '#e3f2fd'].reverse();
 
 const CustomTooltip = ({ active, payload }: any) => {
   if (active && payload && payload.length) {
@@ -32,6 +32,9 @@ const CustomTooltip = ({ active, payload }: any) => {
 
 const CustomizedContent = (props: any) => {
     const { root, depth, x, y, width, height, index, payload, rank, name } = props;
+    const padding = 4;
+    const contentWidth = width - padding * 2;
+    const contentHeight = height - padding * 2;
 
     if (width < 30 || height < 30) {
         return null;
@@ -40,26 +43,29 @@ const CustomizedContent = (props: any) => {
     return (
         <g>
             <rect
-                x={x}
-                y={y}
-                width={width}
-                height={height}
+                x={x + padding / 2}
+                y={y + padding / 2}
+                width={width - padding}
+                height={height - padding}
+                rx={4}
+                ry={4}
                 style={{
                     fill: COLORS[index % COLORS.length],
-                    stroke: '#fff',
-                    strokeWidth: 1,
+                    stroke: 'none',
                 }}
             />
-            <text
-                x={x + width / 2}
-                y={y + height / 2}
-                textAnchor="middle"
-                dominantBaseline="middle"
-                fill="#fff"
-                className="text-xs font-medium"
-            >
-                {name}
-            </text>
+            <foreignObject x={x + padding} y={y + padding} width={contentWidth} height={contentHeight}>
+                 <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                     <p style={{
+                         color: '#fff',
+                         textAlign: 'center',
+                         fontSize: '12px',
+                         wordWrap: 'break-word'
+                     }}>
+                        {name}
+                    </p>
+                 </div>
+            </foreignObject>
         </g>
     );
 };
