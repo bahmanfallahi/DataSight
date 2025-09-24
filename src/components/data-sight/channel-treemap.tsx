@@ -15,7 +15,7 @@ const formatCurrency = (value: number) => {
     }).format(value);
 };
 
-const COLORS = ['#0d47a1', '#1565c0', '#1976d2', '#1e88e5', '#2196f3', '#42a5f5', '#64b5f6', '#90caf9', '#bbdefb', '#e3f2fd'].reverse();
+const COLORS = ["#F89D2A", "#3D5186", "#586786", "#8D9DAE", "#AAB5C2", "#C5CED6"];
 
 const CustomTooltip = ({ active, payload }: any) => {
   if (active && payload && payload.length) {
@@ -32,7 +32,7 @@ const CustomTooltip = ({ active, payload }: any) => {
 
 const CustomizedContent = (props: any) => {
     const { root, depth, x, y, width, height, index, payload, rank, name } = props;
-    const padding = 4;
+    const padding = 5; // Creates the gap
     const contentWidth = width - padding * 2;
     const contentHeight = height - padding * 2;
 
@@ -47,7 +47,7 @@ const CustomizedContent = (props: any) => {
                 y={y + padding / 2}
                 width={width - padding}
                 height={height - padding}
-                rx={4}
+                rx={4} // Rounded corners
                 ry={4}
                 style={{
                     fill: COLORS[index % COLORS.length],
@@ -55,12 +55,21 @@ const CustomizedContent = (props: any) => {
                 }}
             />
             <foreignObject x={x + padding} y={y + padding} width={contentWidth} height={contentHeight}>
-                 <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                 <div style={{ 
+                    width: '100%', 
+                    height: '100%', 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center',
+                    padding: '2px'
+                  }}>
                      <p style={{
                          color: '#fff',
                          textAlign: 'center',
                          fontSize: '12px',
-                         wordWrap: 'break-word'
+                         fontWeight: 300,
+                         wordBreak: 'break-word',
+                         lineHeight: 1.2
                      }}>
                         {name}
                     </p>
@@ -145,7 +154,7 @@ export default function ChannelTreemap({ parsedData }: { parsedData: ParsedData 
                         data={treemapData}
                         dataKey="size"
                         ratio={4 / 3}
-                        stroke="#fff"
+                        stroke="none"
                         fill="#8884d8"
                         content={<CustomizedContent />}
                     >
