@@ -14,7 +14,7 @@ const formatCurrency = (value: number) => {
     }).format(value);
 };
 
-const COLORS = ['#0d47a1', '#1565c0', '#1976d2', '#1e88e5', '#2196f3', '#42a5f5', '#64b5f6', '#90caf9', '#bbdefb', '#e3f2fd'];
+const COLORS = ['#0d47a1', '#1565c0', '#1976d2', '#1e88e5', '#2196f3', '#42a5f5', '#64b5f6', '#90caf9', '#bbdefb', '#e3f2fd'].reverse();
 
 const CustomTooltip = ({ active, payload }: any) => {
   if (active && payload && payload.length) {
@@ -46,7 +46,7 @@ const CustomizedContent = (props: any) => {
                 style={{
                     fill: COLORS[index % COLORS.length],
                     stroke: '#fff',
-                    strokeWidth: 2,
+                    strokeWidth: 1,
                 }}
             />
             <text
@@ -55,7 +55,7 @@ const CustomizedContent = (props: any) => {
                 textAnchor="middle"
                 dominantBaseline="middle"
                 fill="#fff"
-                className="text-xs font-medium"
+                className="text-xs"
             >
                 {name}
             </text>
