@@ -33,8 +33,13 @@ const CustomTooltip = ({ active, payload }: any) => {
 const CustomizedContent = (props: any) => {
     const { root, depth, x, y, width, height, index, payload, rank, name } = props;
     const padding = 5; // Creates the gap
-    const contentWidth = width - padding * 2;
-    const contentHeight = height - padding * 2;
+
+    if (width < padding * 2 || height < padding * 2) {
+        return null;
+    }
+    
+    const contentWidth = width - padding;
+    const contentHeight = height - padding;
 
     if (width < 30 || height < 30) {
         return null;
@@ -45,8 +50,8 @@ const CustomizedContent = (props: any) => {
             <rect
                 x={x + padding / 2}
                 y={y + padding / 2}
-                width={width - padding}
-                height={height - padding}
+                width={contentWidth}
+                height={contentHeight}
                 rx={4} // Rounded corners
                 ry={4}
                 style={{
@@ -54,7 +59,7 @@ const CustomizedContent = (props: any) => {
                     stroke: 'none',
                 }}
             />
-            <foreignObject x={x + padding} y={y + padding} width={contentWidth} height={contentHeight}>
+            <foreignObject x={x + padding} y={y + padding} width={contentWidth-padding} height={contentHeight-padding}>
                  <div style={{ 
                     width: '100%', 
                     height: '100%', 
@@ -149,7 +154,7 @@ export default function ChannelTreemap({ parsedData }: { parsedData: ParsedData 
                 <ChartDownloader chartRef={chartRef} />
             </CardHeader>
             <CardContent>
-                <ResponsiveContainer width="100%" height={350}>
+                <ResponsiveContainer width="100%" height={350} style={{ backgroundColor: 'white' }}>
                     <Treemap
                         data={treemapData}
                         dataKey="size"
