@@ -43,7 +43,7 @@ const StatCard = ({
             <Icon className={cn("h-4 w-4 text-muted-foreground", className)} />
         </CardHeader>
         <CardContent>
-            <div className={cn("text-2xl font-bold", className)}>{value}</div>
+            <div className="text-2xl font-bold">{value}</div>
             <p className="text-xs text-muted-foreground">{description}</p>
         </CardContent>
     </Card>
