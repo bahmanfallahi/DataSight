@@ -3,10 +3,10 @@
 import { useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
-import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from 'recharts';
+import { Area, AreaChart, CartesianGrid, XAxis, YAxis, ReferenceDot, ReferenceArea, Legend } from 'recharts';
 import type { ParsedData } from '@/lib/data-utils';
-import { parse as parseJalali } from 'date-fns-jalali';
-import { TrendingUp } from 'lucide-react';
+import { parse as parseJalali, startOfWeek, endOfWeek, format as formatJalali } from 'date-fns-jalali';
+import { TrendingUp, TrendingDown, Star, Ban } from 'lucide-react';
 
 const formatCurrency = (value: number) => {
     return '[T] ' + new Intl.NumberFormat('en-US', {
@@ -24,13 +24,19 @@ const chartConfig = {
 };
 
 export default function SalesOverTimeChart({ parsedData }: { parsedData: ParsedData }) {
-  const salesData = useMemo(() => {
+  const { 
+    salesData, 
+    bestDay, 
+    worstDay,
+    bestWeekRange,
+    worstWeekRange
+  } = useMemo(() => {
     const dateHeader = parsedData.headers.find(h => h.toLowerCase() === 'date');
     const fiberSaleHeader = parsedData.headers.find(h => h.toLowerCase() === 'fiber sale');
     const ontSaleHeader = parsedData.headers.find(h => h.toLowerCase() === 'ont sale');
 
     if (!dateHeader || !fiberSaleHeader || !ontSaleHeader) {
-      return [];
+      return { salesData: [], bestDay: null, worstDay: null, bestWeekRange: null, worstWeekRange: null };
     }
 
     const salesByDay: Record<string, number> = {};
@@ -61,15 +67,60 @@ export default function SalesOverTimeChart({ parsedData }: { parsedData: ParsedD
       })
       .filter((d): d is { date: Date; sales: number } => d !== null)
       .sort((a, b) => a.date.getTime() - b.date.getTime());
-      
-    let cumulativeSales = 0;
-    return sortedDays.map(d => {
-        cumulativeSales += d.sales;
-        return {
-            date: d.date.getTime(), // Use timestamp for recharts
-            sales: cumulativeSales,
+
+    if (sortedDays.length === 0) {
+      return { salesData: [], bestDay: null, worstDay: null, bestWeekRange: null, worstWeekRange: null };
+    }
+
+    let bestDay = { date: sortedDays[0].date, sales: -1 };
+    let worstDay = { date: sortedDays[0].date, sales: Infinity };
+    
+    sortedDays.forEach(day => {
+        if(day.sales > bestDay.sales) {
+            bestDay = day;
         }
-    })
+        if(day.sales < worstDay.sales) {
+            worstDay = day;
+        }
+    });
+
+
+    const salesByWeek: Record<string, { total: number, start: Date, end: Date}> = {};
+    sortedDays.forEach(({ date, sales }) => {
+        const weekStart = startOfWeek(date, { weekStartsOn: 6 }); // Saturday
+        const weekEnd = endOfWeek(date, { weekStartsOn: 6 });
+        const weekKey = formatJalali(weekStart, 'yyyy-MM-dd');
+        
+        if (!salesByWeek[weekKey]) {
+            salesByWeek[weekKey] = { total: 0, start: weekStart, end: weekEnd };
+        }
+        salesByWeek[weekKey].total += sales;
+    });
+
+    let bestWeek = { total: -1, start: new Date(), end: new Date() };
+    let worstWeek = { total: Infinity, start: new Date(), end: new Date() };
+
+    Object.values(salesByWeek).forEach(week => {
+        if(week.total > bestWeek.total) {
+            bestWeek = week;
+        }
+        if(week.total < worstWeek.total) {
+            worstWeek = week;
+        }
+    });
+
+    const finalSalesData = sortedDays.map(d => ({
+        date: d.date.getTime(),
+        sales: d.sales,
+    }));
+    
+    return {
+        salesData: finalSalesData,
+        bestDay: { ...bestDay, date: bestDay.date.getTime() },
+        worstDay: { ...worstDay, date: worstDay.date.getTime() },
+        bestWeekRange: bestWeek.total > -1 ? { x1: bestWeek.start.getTime(), x2: bestWeek.end.getTime() } : null,
+        worstWeekRange: worstWeek.total < Infinity ? { x1: worstWeek.start.getTime(), x2: worstWeek.end.getTime() } : null,
+    }
 
   }, [parsedData]);
 
@@ -82,7 +133,7 @@ export default function SalesOverTimeChart({ parsedData }: { parsedData: ParsedD
                     <CardTitle>Sales Over Time</CardTitle>
                 </div>
                 <CardDescription>
-                    Cumulative sales trend based on your data.
+                    Daily sales trend with best/worst periods highlighted.
                 </CardDescription>
             </CardHeader>
             <CardContent>
@@ -102,17 +153,18 @@ export default function SalesOverTimeChart({ parsedData }: { parsedData: ParsedD
                 <CardTitle>Sales Over Time</CardTitle>
             </div>
             <CardDescription>
-                A chart showing the cumulative sales fluctuations over time.
+                A chart showing daily sales, with best and worst sales periods highlighted.
             </CardDescription>
         </CardHeader>
         <CardContent>
-            <ChartContainer config={chartConfig} className="h-[300px] w-full">
+            <ChartContainer config={chartConfig} className="h-[400px] w-full">
                 <AreaChart
                     accessibilityLayer
                     data={salesData}
                     margin={{
                         left: 12,
                         right: 12,
+                        top: 20,
                     }}
                 >
                     <CartesianGrid vertical={false} />
@@ -141,6 +193,28 @@ export default function SalesOverTimeChart({ parsedData }: { parsedData: ParsedD
                             />
                         }
                     />
+                     <Legend content={({ payload }) => {
+                         return (
+                            <div className="flex justify-center items-center gap-6 mt-4 text-sm text-muted-foreground">
+                                <div className="flex items-center gap-2">
+                                    <div className="w-3 h-3 rounded-full bg-green-500/30 border border-green-500"/>
+                                    <span>Best Week</span>
+                                </div>
+                                 <div className="flex items-center gap-2">
+                                    <div className="w-3 h-3 rounded-full bg-red-500/30 border border-red-500"/>
+                                    <span>Worst Week</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <Star className="w-4 h-4 text-yellow-400" fill="currentColor" />
+                                    <span>Best Day</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <Ban className="w-4 h-4 text-red-600" />
+                                    <span>Worst Day</span>
+                                </div>
+                            </div>
+                         )
+                     }}/>
                     <defs>
                         <linearGradient id="fillSales" x1="0" y1="0" x2="0" y2="1">
                             <stop
@@ -162,6 +236,12 @@ export default function SalesOverTimeChart({ parsedData }: { parsedData: ParsedD
                         stroke="var(--color-sales)"
                         stackId="a"
                     />
+
+                    {bestWeekRange && <ReferenceArea x1={bestWeekRange.x1} x2={bestWeekRange.x2} stroke="transparent" fill="green" fillOpacity={0.1} />}
+                    {worstWeekRange && <ReferenceArea x1={worstWeekRange.x1} x2={worstWeekRange.x2} stroke="transparent" fill="red" fillOpacity={0.1} />}
+
+                    {bestDay && <ReferenceDot x={bestDay.date} y={bestDay.sales} r={6} fill="hsl(var(--background))" stroke="rgb(250, 204, 21)" strokeWidth={2} />}
+                    {worstDay && <ReferenceDot x={worstDay.date} y={worstDay.sales} r={6} fill="hsl(var(--background))" stroke="rgb(220, 38, 38)" strokeWidth={2} />}
                 </AreaChart>
             </ChartContainer>
         </CardContent>
