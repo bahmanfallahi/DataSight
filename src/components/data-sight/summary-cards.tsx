@@ -135,7 +135,7 @@ export default function SummaryCards({ parsedData, columnAnalysis }: SummaryCard
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
       {ontSaleTotal !== null && (
-        <Card className="bg-primary text-primary-foreground shadow-lg">
+        <Card className="bg-gradient-to-br from-primary to-primary/70 text-primary-foreground shadow-lg">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total ONT Sale</CardTitle>
             <DollarSign className="h-4 w-4 text-primary-foreground" />
