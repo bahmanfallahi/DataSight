@@ -45,18 +45,18 @@ const StatCard = ({
     return (
         <Card className="bg-muted/50 shadow-sm border-0 flex flex-col">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className={cn("text-sm font-medium", colorClass)}>{title}</CardTitle>
+                <CardTitle className="text-sm font-medium">{title}</CardTitle>
                 <Icon className={cn("h-4 w-4 text-muted-foreground", colorClass)} />
             </CardHeader>
             <CardContent>
-                <div className="text-2xl font-bold">{value}</div>
+                <div className={cn("text-2xl font-bold", colorClass)}>{value}</div>
                 <p className="text-xs text-muted-foreground">{description}</p>
             </CardContent>
             {chartData.length > 0 && (
                  <CardContent className="flex-1 flex flex-col justify-end pb-2">
                     <div className="h-[50px] -mx-6 -mb-2">
                         <ResponsiveContainer width="100%" height="100%">
-                            <AreaChart data={chartData}>
+                            <AreaChart data={chartData} margin={{ top: 5, right: 0, left: 0, bottom: 0 }}>
                                 <defs>
                                     <linearGradient id={`color-${title.replace(/\s+/g, '-')}`} x1="0" y1="0" x2="0" y2="1">
                                         <stop offset="5%" stopColor={chartColor} stopOpacity={0.5}/>
@@ -77,20 +77,26 @@ const StatCard = ({
                 </CardContent>
             )}
         </Card>
-    )
+    );
 }
 
 export default function DateBasedSalesStats({ parsedData }: { parsedData: ParsedData }) {
-    const { bestDay, worstDay, bestWeek, worstWeek, dailySalesForChart } = useMemo(() => {
+    const { 
+        bestDay, 
+        worstDay, 
+        bestWeek, 
+        worstWeek, 
+        dailySalesForChart,
+        weeklySalesForChart,
+    } = useMemo(() => {
         const dateHeader = parsedData.headers.find(h => h.toLowerCase() === 'date');
         const fiberSaleHeader = parsedData.headers.find(h => h.toLowerCase() === 'fiber sale');
         const ontSaleHeader = parsedData.headers.find(h => h.toLowerCase() === 'ont sale');
 
         if (!dateHeader || !fiberSaleHeader || !ontSaleHeader) {
-            return { bestDay: null, worstDay: null, bestWeek: null, worstWeek: null, dailySalesForChart: [] };
+            return { bestDay: null, worstDay: null, bestWeek: null, worstWeek: null, dailySalesForChart: [], weeklySalesForChart: [] };
         }
         
-        // --- Sales by Day ---
         const salesByDay: Record<string, number> = {};
         parsedData.data.forEach(row => {
             const dateStr = row[dateHeader];
@@ -103,7 +109,7 @@ export default function DateBasedSalesStats({ parsedData }: { parsedData: Parsed
                 salesByDay[dateStr] = totalSale;
             }
         });
-
+        
         const sortedDailySales = Object.entries(salesByDay)
             .map(([dateStr, sales]) => {
                 try {
@@ -113,80 +119,87 @@ export default function DateBasedSalesStats({ parsedData }: { parsedData: Parsed
             .filter((d): d is { date: Date; sales: number } => d !== null)
             .sort((a,b) => a.date.getTime() - b.date.getTime());
         
-        const dailySalesForChart = sortedDailySales.map(d => ({ sales: d.sales }));
+        const dailyChanges = sortedDailySales.map((day, index, arr) => {
+            if (index === 0) return { sales: 0 }; // No previous day for the first day
+            const diff = day.sales - arr[index - 1].sales;
+            return { sales: diff };
+        });
 
-        let bestDay = { date: '', total: 0 };
-        let worstDay = { date: '', total: Infinity };
-        for (const [date, total] of Object.entries(salesByDay)) {
-            if (total > bestDay.total) {
-                bestDay = { date, total };
+        let bestDay = { date: '', total: -Infinity, change: -Infinity };
+        let worstDay = { date: '', total: Infinity, change: Infinity };
+
+        sortedDailySales.forEach((dayData, index) => {
+            const dayTotal = dayData.sales;
+            const change = index > 0 ? dayData.sales - sortedDailySales[index-1].sales : 0;
+
+            if (dayTotal > bestDay.total) {
+                bestDay = { date: Object.keys(salesByDay).find(key => salesByDay[key] === dayTotal) || '', total: dayTotal, change: change };
             }
-            if (total < worstDay.total) {
-                worstDay = { date, total };
+            if (dayTotal < worstDay.total) {
+                worstDay = { date: Object.keys(salesByDay).find(key => salesByDay[key] === dayTotal) || '', total: dayTotal, change: change };
             }
-        }
+        });
         
         // --- Sales by Week ---
-        const validDates = Object.keys(salesByDay)
-            .map(dateStr => {
-                try {
-                    return parseJalali(dateStr, 'yyyy/MM/dd', new Date());
-                } catch {
-                    return null;
-                }
-            })
-            .filter((d): d is Date => d !== null)
-            .sort((a, b) => a.getTime() - b.getTime());
-
+        const validDates = sortedDailySales.map(d => d.date);
         if (validDates.length === 0) {
             return { 
-                bestDay: bestDay.date ? bestDay : null, 
-                worstDay: worstDay.date && worstDay.total !== Infinity ? worstDay : null,
+                bestDay: bestDay.total !== -Infinity ? bestDay : null, 
+                worstDay: worstDay.total !== Infinity ? worstDay : null,
                 bestWeek: null, 
                 worstWeek: null,
-                dailySalesForChart: []
+                dailySalesForChart: [],
+                weeklySalesForChart: [],
             };
         }
 
         const firstDate = startOfDay(validDates[0]);
-        const salesByWeek: Record<number, { total: number }> = {};
+        const salesByWeek: Record<number, { total: number, weekNum: number }> = {};
 
-        for (const [dateStr, total] of Object.entries(salesByDay)) {
+        sortedDailySales.forEach(dayData => {
             try {
-                const dateObj = parseJalali(dateStr, 'yyyy/MM/dd', new Date());
-                const weekNumber = differenceInWeeks(startOfDay(dateObj), firstDate, { weekStartsOn: 6 }) + 1; // Saturday
+                const weekNumber = differenceInWeeks(startOfDay(dayData.date), firstDate, { weekStartsOn: 6 }) + 1; // Saturday
                 
                 if (!salesByWeek[weekNumber]) {
-                    salesByWeek[weekNumber] = { total: 0 };
+                    salesByWeek[weekNumber] = { total: 0, weekNum: weekNumber };
                 }
-                salesByWeek[weekNumber].total += total;
+                salesByWeek[weekNumber].total += dayData.sales;
 
             } catch (e) {
-                console.error(`Invalid date format for: ${dateStr}`, e);
+                console.error(`Invalid date format for: ${dayData.date}`, e);
             }
-        }
+        });
+
+        const sortedWeeklySales = Object.values(salesByWeek).sort((a,b) => a.weekNum - b.weekNum);
+
+        const weeklyChanges = sortedWeeklySales.map((week, index, arr) => {
+            if (index === 0) return { sales: 0 };
+            const diff = week.total - arr[index - 1].total;
+            return { sales: diff };
+        });
         
-        let bestWeek = { week: -1, total: -1 };
-        let worstWeek = { week: -1, total: Infinity };
+        let bestWeek = { week: -1, total: -1, change: -Infinity };
+        let worstWeek = { week: -1, total: Infinity, change: Infinity };
 
-        for (const weekStr in salesByWeek) {
-            const week = parseInt(weekStr, 10);
-            const { total } = salesByWeek[week];
-
-            if (total > bestWeek.total) {
-                bestWeek = { week, total };
+        sortedWeeklySales.forEach((weekData, index) => {
+            const weekTotal = weekData.total;
+            const change = index > 0 ? weekTotal - sortedWeeklySales[index-1].total : 0;
+            
+            if (weekTotal > bestWeek.total) {
+                bestWeek = { week: weekData.weekNum, total: weekTotal, change };
             }
-            if (total < worstWeek.total) {
-                worstWeek = { week, total };
+            if (weekTotal < worstWeek.total) {
+                worstWeek = { week: weekData.weekNum, total: weekTotal, change };
             }
-        }
+        });
 
         return {
-            bestDay: bestDay.date ? bestDay : null,
-            worstDay: worstDay.date && worstDay.total !== Infinity ? worstDay : null,
+            bestDay: bestDay.total !== -Infinity ? bestDay : null,
+            worstDay: worstDay.total !== Infinity ? worstDay : null,
             bestWeek: bestWeek.week !== -1 ? bestWeek : null,
             worstWeek: worstWeek.week !== -1 ? worstWeek : null,
-            dailySalesForChart
+            dailySalesForChart: dailyChanges,
+            weeklySalesForChart: weeklyChanges,
         };
     }, [parsedData]);
     
@@ -217,13 +230,13 @@ export default function DateBasedSalesStats({ parsedData }: { parsedData: Parsed
                 />
             )}
             {bestWeek && (
-                    <StatCard
+                <StatCard
                     icon={TrendingUp}
                     title="Best Selling Week"
                     value={`${getOrdinal(bestWeek.week)} Week`}
                     description={`with ${formatCurrency(bestWeek.total)} in sales`}
                     colorClass="text-green-500"
-                    chartData={dailySalesForChart}
+                    chartData={weeklySalesForChart}
                 />
             )}
             {worstWeek && (
@@ -233,7 +246,7 @@ export default function DateBasedSalesStats({ parsedData }: { parsedData: Parsed
                     value={`${getOrdinal(worstWeek.week)} Week`}
                     description={`with ${formatCurrency(worstWeek.total)} in sales`}
                     colorClass="text-red-500"
-                    chartData={dailySalesForChart}
+                    chartData={weeklySalesForChart}
                 />
             )}
         </div>
