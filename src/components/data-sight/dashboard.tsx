@@ -12,6 +12,7 @@ import ExpertSalesPieChart from './expert-sales-pie-chart';
 import OntSalesPieChart from './ont-sales-pie-chart';
 import AreaSalesPieChart from './area-sales-pie-chart';
 import AreaSalesTable from './area-sales-table';
+import ChannelTreemap from './channel-treemap';
 
 interface DashboardProps {
   parsedData: ParsedData;
@@ -53,6 +54,8 @@ export default function Dashboard({
       </div>
 
       <SalesOverTimeChart parsedData={parsedData} />
+      
+      <ChannelTreemap parsedData={parsedData} />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <ExpertSalesPieChart parsedData={parsedData} />
