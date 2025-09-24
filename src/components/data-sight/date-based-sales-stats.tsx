@@ -31,17 +31,13 @@ const StatCard = ({
     value,
     description,
     colorClass,
-    chartData
 }: {
     icon: React.ElementType,
     title: string,
     value: string,
     description: string,
     colorClass?: string,
-    chartData: { sales: number }[];
 }) => {
-    const chartColor = colorClass === 'text-green-500' ? 'hsl(var(--chart-2))' : (colorClass === 'text-red-500' ? 'hsl(var(--chart-4))' : 'hsl(var(--chart-1))');
-
     return (
         <Card className="bg-muted/50 shadow-sm border-0 flex flex-col">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -52,30 +48,6 @@ const StatCard = ({
                 <div className={cn("text-2xl font-bold")}>{value}</div>
                 <p className="text-xs text-muted-foreground">{description}</p>
             </CardContent>
-            {chartData.length > 0 && (
-                 <CardContent className="flex-1 flex flex-col justify-end pb-2">
-                    <div className="h-[50px] -mx-6 -mb-2">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <AreaChart data={chartData} margin={{ top: 5, right: 0, left: 0, bottom: 0 }}>
-                                <defs>
-                                    <linearGradient id={`color-${title.replace(/\s+/g, '-')}`} x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor={chartColor} stopOpacity={0.5}/>
-                                        <stop offset="95%" stopColor={chartColor} stopOpacity={0}/>
-                                    </linearGradient>
-                                </defs>
-                                <Area
-                                    type="monotone"
-                                    dataKey="sales"
-                                    stroke={chartColor}
-                                    strokeWidth={2}
-                                    fillOpacity={1}
-                                    fill={`url(#color-${title.replace(/\s+/g, '-')})`}
-                                    />
-                            </AreaChart>
-                        </ResponsiveContainer>
-                    </div>
-                </CardContent>
-            )}
         </Card>
     );
 }
@@ -207,7 +179,6 @@ export default function DateBasedSalesStats({ parsedData }: { parsedData: Parsed
                     value={bestDay.date}
                     description={`with ${formatCurrency(bestDay.total)} in sales`}
                     colorClass="text-green-500"
-                    chartData={dailySalesForChart}
                 />
             )}
             {worstDay && (
@@ -217,7 +188,6 @@ export default function DateBasedSalesStats({ parsedData }: { parsedData: Parsed
                     value={worstDay.date}
                     description={`with ${formatCurrency(worstDay.total)} in sales`}
                     colorClass="text-red-500"
-                    chartData={dailySalesForChart}
                 />
             )}
             {bestWeek && (
@@ -227,7 +197,6 @@ export default function DateBasedSalesStats({ parsedData }: { parsedData: Parsed
                     value={`${getOrdinal(bestWeek.week)} Week`}
                     description={`with ${formatCurrency(bestWeek.total)} in sales`}
                     colorClass="text-green-500"
-                    chartData={weeklySalesForChart}
                 />
             )}
             {worstWeek && (
@@ -237,7 +206,6 @@ export default function DateBasedSalesStats({ parsedData }: { parsedData: Parsed
                     value={`${getOrdinal(worstWeek.week)} Week`}
                     description={`with ${formatCurrency(worstWeek.total)} in sales`}
                     colorClass="text-red-500"
-                    chartData={weeklySalesForChart}
                 />
             )}
         </div>
