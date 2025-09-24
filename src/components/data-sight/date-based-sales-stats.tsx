@@ -81,13 +81,13 @@ const StatCard = ({
 }
 
 export default function DateBasedSalesStats({ parsedData }: { parsedData: ParsedData }) {
-    const { bestDay, worstDay, bestWeek, worstWeek, cumulativeSalesForChart } = useMemo(() => {
+    const { bestDay, worstDay, bestWeek, worstWeek, dailySalesForChart } = useMemo(() => {
         const dateHeader = parsedData.headers.find(h => h.toLowerCase() === 'date');
         const fiberSaleHeader = parsedData.headers.find(h => h.toLowerCase() === 'fiber sale');
         const ontSaleHeader = parsedData.headers.find(h => h.toLowerCase() === 'ont sale');
 
         if (!dateHeader || !fiberSaleHeader || !ontSaleHeader) {
-            return { bestDay: null, worstDay: null, bestWeek: null, worstWeek: null, cumulativeSalesForChart: [] };
+            return { bestDay: null, worstDay: null, bestWeek: null, worstWeek: null, dailySalesForChart: [] };
         }
         
         // --- Sales by Day ---
@@ -113,11 +113,7 @@ export default function DateBasedSalesStats({ parsedData }: { parsedData: Parsed
             .filter((d): d is { date: Date; sales: number } => d !== null)
             .sort((a,b) => a.date.getTime() - b.date.getTime());
         
-        let cumulativeSales = 0;
-        const cumulativeSalesForChart = sortedDailySales.map(d => {
-            cumulativeSales += d.sales;
-            return { sales: cumulativeSales };
-        });
+        const dailySalesForChart = sortedDailySales.map(d => ({ sales: d.sales }));
 
         let bestDay = { date: '', total: 0 };
         let worstDay = { date: '', total: Infinity };
@@ -148,7 +144,7 @@ export default function DateBasedSalesStats({ parsedData }: { parsedData: Parsed
                 worstDay: worstDay.date && worstDay.total !== Infinity ? worstDay : null,
                 bestWeek: null, 
                 worstWeek: null,
-                cumulativeSalesForChart: []
+                dailySalesForChart: []
             };
         }
 
@@ -190,7 +186,7 @@ export default function DateBasedSalesStats({ parsedData }: { parsedData: Parsed
             worstDay: worstDay.date && worstDay.total !== Infinity ? worstDay : null,
             bestWeek: bestWeek.week !== -1 ? bestWeek : null,
             worstWeek: worstWeek.week !== -1 ? worstWeek : null,
-            cumulativeSalesForChart
+            dailySalesForChart
         };
     }, [parsedData]);
     
@@ -207,7 +203,7 @@ export default function DateBasedSalesStats({ parsedData }: { parsedData: Parsed
                     value={bestDay.date}
                     description={`with ${formatCurrency(bestDay.total)} in sales`}
                     colorClass="text-green-500"
-                    chartData={cumulativeSalesForChart}
+                    chartData={dailySalesForChart}
                 />
             )}
             {worstDay && (
@@ -217,7 +213,7 @@ export default function DateBasedSalesStats({ parsedData }: { parsedData: Parsed
                     value={worstDay.date}
                     description={`with ${formatCurrency(worstDay.total)} in sales`}
                     colorClass="text-red-500"
-                    chartData={cumulativeSalesForChart}
+                    chartData={dailySalesForChart}
                 />
             )}
             {bestWeek && (
@@ -227,7 +223,7 @@ export default function DateBasedSalesStats({ parsedData }: { parsedData: Parsed
                     value={`${getOrdinal(bestWeek.week)} Week`}
                     description={`with ${formatCurrency(bestWeek.total)} in sales`}
                     colorClass="text-green-500"
-                    chartData={cumulativeSalesForChart}
+                    chartData={dailySalesForChart}
                 />
             )}
             {worstWeek && (
@@ -237,7 +233,7 @@ export default function DateBasedSalesStats({ parsedData }: { parsedData: Parsed
                     value={`${getOrdinal(worstWeek.week)} Week`}
                     description={`with ${formatCurrency(worstWeek.total)} in sales`}
                     colorClass="text-red-500"
-                    chartData={cumulativeSalesForChart}
+                    chartData={dailySalesForChart}
                 />
             )}
         </div>
