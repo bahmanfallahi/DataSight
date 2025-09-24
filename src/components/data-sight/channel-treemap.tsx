@@ -14,7 +14,7 @@ const formatCurrency = (value: number) => {
     }).format(value);
 };
 
-const COLORS = ['#0d47a1', '#1565c0', '#1976d2', '#1e88e5', '#2196f3', '#42a5f5', '#64b5f6', '#90caf9', '#bbdefb', '#e3f2fd'].reverse();
+const COLORS = ['#0d47a1', '#1565c0', '#1976d2', '#1e88e5', '#2196f3', '#42a5f5', '#64b5f6', '#90caf9', '#bbdefb', '#e3f2fd'];
 
 const CustomTooltip = ({ active, payload }: any) => {
   if (active && payload && payload.length) {
