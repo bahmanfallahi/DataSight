@@ -64,14 +64,14 @@ const CustomizedContent = (props: any) => {
                 y={y}
                 width={width}
                 height={height}
-                rx={4} 
-                ry={4}
+                rx={7} 
+                ry={7}
                 style={{
                     fill: COLORS[index % COLORS.length],
                 }}
             />
             {canDisplayText && (
-                 <foreignObject x={x + 6} y={y + 6} width={width - 8} height={height - 8} style={{ pointerEvents: 'none' }}>
+                 <foreignObject x={x + 4} y={y + 4} width={width - 8} height={height - 8} style={{ pointerEvents: 'none' }}>
                      <div style={{ 
                         width: '100%', 
                         height: '100%', 
@@ -174,7 +174,7 @@ export default function ChannelTreemap({ parsedData }: { parsedData: ParsedData 
                         dataKey="size"
                         ratio={4 / 3}
                         stroke="#ffffff"
-                        strokeWidth={2}
+                        strokeWidth={4}
                         content={<CustomizedContent />}
                     >
                       <Tooltip content={<CustomTooltip />} />
