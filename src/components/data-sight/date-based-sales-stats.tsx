@@ -119,7 +119,7 @@ export default function DateBasedSalesStats({ parsedData }: { parsedData: Parsed
             .filter((d): d is { date: Date; sales: number } => d !== null)
             .sort((a,b) => a.date.getTime() - b.date.getTime());
         
-        const dailyChanges = sortedDailySales.map(day => ({ sales: day.sales }));
+        const dailySalesForChart = sortedDailySales.map(day => ({ sales: day.sales }));
 
         let bestDay = { date: '', total: -Infinity };
         let worstDay = { date: '', total: Infinity };
@@ -168,7 +168,7 @@ export default function DateBasedSalesStats({ parsedData }: { parsedData: Parsed
 
         const sortedWeeklySales = Object.values(salesByWeek).sort((a,b) => a.weekNum - b.weekNum);
 
-        const weeklyChanges = sortedWeeklySales.map(week => ({ sales: week.total }));
+        const weeklySalesForChart = sortedWeeklySales.map(week => ({ sales: week.total }));
         
         let bestWeek = { week: -1, total: -1 };
         let worstWeek = { week: -1, total: Infinity };
@@ -189,8 +189,8 @@ export default function DateBasedSalesStats({ parsedData }: { parsedData: Parsed
             worstDay: worstDay.total !== Infinity ? worstDay : null,
             bestWeek: bestWeek.week !== -1 ? bestWeek : null,
             worstWeek: worstWeek.week !== -1 ? worstWeek : null,
-            dailySalesForChart: dailyChanges,
-            weeklySalesForChart: weeklyChanges,
+            dailySalesForChart: dailySalesForChart,
+            weeklySalesForChart: weeklySalesForChart,
         };
     }, [parsedData]);
     
