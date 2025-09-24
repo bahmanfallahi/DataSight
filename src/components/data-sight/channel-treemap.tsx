@@ -71,7 +71,7 @@ const CustomizedContent = (props: any) => {
                 }}
             />
             {canDisplayText && (
-                 <foreignObject x={x + 4} y={y + 4} width={width - 8} height={height - 8} style={{ pointerEvents: 'none' }}>
+                 <foreignObject x={x + 6} y={y + 6} width={width - 8} height={height - 8} style={{ pointerEvents: 'none' }}>
                      <div style={{ 
                         width: '100%', 
                         height: '100%', 
