@@ -40,7 +40,7 @@ const StatCard = ({
     colorClass?: string,
     chartData: { sales: number }[];
 }) => {
-    const chartColor = colorClass === 'text-green-500' ? 'hsl(var(--chart-2))' : 'hsl(var(--chart-4))';
+    const chartColor = colorClass === 'text-green-500' ? 'hsl(var(--chart-2))' : (colorClass === 'text-red-500' ? 'hsl(var(--chart-4))' : 'hsl(var(--chart-1))');
 
     return (
         <Card className="bg-muted/50 shadow-sm border-0 flex flex-col">
@@ -49,7 +49,7 @@ const StatCard = ({
                 <Icon className={cn("h-4 w-4 text-muted-foreground", colorClass)} />
             </CardHeader>
             <CardContent>
-                <div className={cn("text-2xl font-bold", colorClass)}>{value}</div>
+                <div className={cn("text-2xl font-bold")}>{value}</div>
                 <p className="text-xs text-muted-foreground">{description}</p>
             </CardContent>
             {chartData.length > 0 && (
@@ -119,24 +119,20 @@ export default function DateBasedSalesStats({ parsedData }: { parsedData: Parsed
             .filter((d): d is { date: Date; sales: number } => d !== null)
             .sort((a,b) => a.date.getTime() - b.date.getTime());
         
-        const dailyChanges = sortedDailySales.map((day, index, arr) => {
-            if (index === 0) return { sales: 0 }; // No previous day for the first day
-            const diff = day.sales - arr[index - 1].sales;
-            return { sales: diff };
-        });
+        const dailyChanges = sortedDailySales.map(day => ({ sales: day.sales }));
 
-        let bestDay = { date: '', total: -Infinity, change: -Infinity };
-        let worstDay = { date: '', total: Infinity, change: Infinity };
+        let bestDay = { date: '', total: -Infinity };
+        let worstDay = { date: '', total: Infinity };
 
-        sortedDailySales.forEach((dayData, index) => {
+        sortedDailySales.forEach((dayData) => {
             const dayTotal = dayData.sales;
-            const change = index > 0 ? dayData.sales - sortedDailySales[index-1].sales : 0;
+            const dateKey = Object.keys(salesByDay).find(key => salesByDay[key] === dayTotal);
 
             if (dayTotal > bestDay.total) {
-                bestDay = { date: Object.keys(salesByDay).find(key => salesByDay[key] === dayTotal) || '', total: dayTotal, change: change };
+                bestDay = { date: dateKey || '', total: dayTotal };
             }
             if (dayTotal < worstDay.total) {
-                worstDay = { date: Object.keys(salesByDay).find(key => salesByDay[key] === dayTotal) || '', total: dayTotal, change: change };
+                worstDay = { date: dateKey || '', total: dayTotal };
             }
         });
         
@@ -172,24 +168,19 @@ export default function DateBasedSalesStats({ parsedData }: { parsedData: Parsed
 
         const sortedWeeklySales = Object.values(salesByWeek).sort((a,b) => a.weekNum - b.weekNum);
 
-        const weeklyChanges = sortedWeeklySales.map((week, index, arr) => {
-            if (index === 0) return { sales: 0 };
-            const diff = week.total - arr[index - 1].total;
-            return { sales: diff };
-        });
+        const weeklyChanges = sortedWeeklySales.map(week => ({ sales: week.total }));
         
-        let bestWeek = { week: -1, total: -1, change: -Infinity };
-        let worstWeek = { week: -1, total: Infinity, change: Infinity };
+        let bestWeek = { week: -1, total: -1 };
+        let worstWeek = { week: -1, total: Infinity };
 
-        sortedWeeklySales.forEach((weekData, index) => {
+        sortedWeeklySales.forEach((weekData) => {
             const weekTotal = weekData.total;
-            const change = index > 0 ? weekTotal - sortedWeeklySales[index-1].total : 0;
             
             if (weekTotal > bestWeek.total) {
-                bestWeek = { week: weekData.weekNum, total: weekTotal, change };
+                bestWeek = { week: weekData.weekNum, total: weekTotal };
             }
             if (weekTotal < worstWeek.total) {
-                worstWeek = { week: weekData.weekNum, total: weekTotal, change };
+                worstWeek = { week: weekData.weekNum, total: weekTotal };
             }
         });
 
