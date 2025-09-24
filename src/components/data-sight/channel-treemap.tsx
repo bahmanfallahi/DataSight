@@ -15,7 +15,20 @@ const formatCurrency = (value: number) => {
     }).format(value);
 };
 
-const COLORS = ["#F89D2A", "#3D5186", "#586786", "#8D9DAE", "#AAB5C2", "#C5CED6"];
+const COLORS = [
+  "#F89D2A", // Bright Orange (Most Important)
+  "#3D5186", // Dark Blue
+  "#586786", // Muted Blue
+  "#8D9DAE", // Blue Gray
+  "#AAB5C2", // Light Gray
+  "#C5CED6", // Very Light Gray
+  "#4A6F95", // Deeper Muted Blue
+  "#7B93AC", // Softer Blue Gray
+  "#9CB0C1", // Lighter Blue Gray
+  "#BFCEDB", // Very Light Blue Gray
+  "#6E839A",
+  "#93A4B8"
+];
 
 const CustomTooltip = ({ active, payload }: any) => {
   if (active && payload && payload.length) {
