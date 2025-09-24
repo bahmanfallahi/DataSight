@@ -52,10 +52,10 @@ export default function OntSalesPieChart({ parsedData }: { parsedData: ParsedDat
       .sort((a, b) => b.count - a.count);
 
     let finalData;
-    if (sortedSales.length > 4) {
-        const topFour = sortedSales.slice(0, 4);
-        const otherTotal = sortedSales.slice(4).reduce((acc, curr) => acc + curr.count, 0);
-        finalData = [...topFour, { name: 'Other', count: otherTotal }];
+    if (sortedSales.length > 6) {
+        const topSix = sortedSales.slice(0, 6);
+        const otherTotal = sortedSales.slice(6).reduce((acc, curr) => acc + curr.count, 0);
+        finalData = [...topSix, { name: 'Other', count: otherTotal }];
     } else {
         finalData = sortedSales;
     }

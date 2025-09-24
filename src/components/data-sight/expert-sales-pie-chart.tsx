@@ -18,7 +18,7 @@ interface ExpertSalesData {
   fill: string;
 }
 
-const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
+const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#6366f1', '#ec4899'];
 
 export default function ExpertSalesPieChart({ parsedData }: { parsedData: ParsedData }) {
   const { chartData, totalRevenue } = useMemo(() => {
@@ -56,10 +56,10 @@ export default function ExpertSalesPieChart({ parsedData }: { parsedData: Parsed
       .sort((a, b) => b.totalSales - a.totalSales);
 
     let finalData;
-    if (sortedSales.length > 4) {
-      const topFour = sortedSales.slice(0, 4);
-      const otherTotal = sortedSales.slice(4).reduce((acc, curr) => acc + curr.totalSales, 0);
-      finalData = [...topFour, { name: 'Other', totalSales: otherTotal }];
+    if (sortedSales.length > 6) {
+      const topSix = sortedSales.slice(0, 6);
+      const otherTotal = sortedSales.slice(6).reduce((acc, curr) => acc + curr.totalSales, 0);
+      finalData = [...topSix, { name: 'Other', totalSales: otherTotal }];
     } else {
       finalData = sortedSales;
     }
