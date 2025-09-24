@@ -31,11 +31,10 @@ const CustomTooltip = ({ active, payload }: any) => {
 };
 
 const CustomizedContent = (props: any) => {
-    const { root, depth, x, y, width, height, index, payload, rank, name } = props;
+    const { depth, x, y, width, height, index, name } = props;
     
-    if (width < 30 || height < 30) {
-        return null;
-    }
+    // Don't render text if the block is too small
+    const canDisplayText = width > 50 && height > 25;
 
     return (
         <g>
@@ -51,27 +50,26 @@ const CustomizedContent = (props: any) => {
                     stroke: 'none',
                 }}
             />
-            <foreignObject x={x + 4} y={y + 4} width={width - 8} height={height - 8}>
-                 <div style={{ 
-                    width: '100%', 
-                    height: '100%', 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    justifyContent: 'center',
-                    padding: '2px'
-                  }}>
-                     <p style={{
-                         color: '#fff',
-                         textAlign: 'center',
-                         fontSize: '12px',
-                         fontWeight: 300,
-                         wordBreak: 'break-word',
-                         lineHeight: 1.2
-                     }}>
-                        {name}
-                    </p>
-                 </div>
-            </foreignObject>
+            {canDisplayText && (
+                 <foreignObject x={x + 4} y={y + 4} width={width - 8} height={height - 8} style={{ pointerEvents: 'none' }}>
+                     <div style={{ 
+                        width: '100%', 
+                        height: '100%', 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'center',
+                        padding: '2px',
+                        color: '#fff',
+                        textAlign: 'center',
+                        fontSize: '12px',
+                        fontWeight: 500,
+                        wordBreak: 'break-word',
+                        lineHeight: 1.2
+                      }}>
+                         {name}
+                     </div>
+                </foreignObject>
+            )}
         </g>
     );
 };
