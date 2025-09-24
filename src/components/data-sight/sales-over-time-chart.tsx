@@ -6,7 +6,7 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis, ReferenceDot, ReferenceArea, Legend } from 'recharts';
 import type { ParsedData } from '@/lib/data-utils';
 import { parse as parseJalali, startOfWeek, endOfWeek, format as formatJalali } from 'date-fns-jalali';
-import { TrendingUp, TrendingDown, Star, Ban } from 'lucide-react';
+import { TrendingUp, Star, Ban } from 'lucide-react';
 
 const formatCurrency = (value: number) => {
     return '[T] ' + new Intl.NumberFormat('en-US', {
