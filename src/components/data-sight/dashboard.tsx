@@ -11,6 +11,7 @@ import SalesOverTimeChart from './sales-over-time-chart';
 import ExpertSalesPieChart from './expert-sales-pie-chart';
 import OntSalesPieChart from './ont-sales-pie-chart';
 import AreaSalesPieChart from './area-sales-pie-chart';
+import AreaSalesTable from './area-sales-table';
 
 interface DashboardProps {
   parsedData: ParsedData;
@@ -49,6 +50,8 @@ export default function Dashboard({
       </div>
       
       <AgentSalesTable parsedData={parsedData} />
+      
+      <AreaSalesTable parsedData={parsedData} />
       
       <div>
         <h2 className="text-2xl font-bold tracking-tight mb-4">Column Profiler</h2>
