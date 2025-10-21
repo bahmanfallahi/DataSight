@@ -16,6 +16,8 @@ import SavedReports from '@/components/data-sight/saved-reports';
 import { saveReport } from '@/lib/reports';
 import { firestore } from '@/lib/firebase';
 import { collection, getDocs, limit, query } from 'firebase/firestore';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 
 // Helper to convert parsed data back to a CSV string
@@ -124,31 +126,30 @@ export default function Home() {
     }
   };
 
-  const handleTestConnection = async () => {
+  const handleTestConnection = () => {
     setIsTestingConnection(true);
-    try {
-      // Perform a simple and harmless read operation to test the connection and rules
-      const reportsCollection = collection(firestore, 'reports');
-      const q = query(reportsCollection, limit(1));
-      await getDocs(q);
-      
-      toast({
-        title: 'Success',
-        description: 'Connection to the database was successful.',
-      });
+    const reportsCollection = collection(firestore, 'reports');
+    const q = query(reportsCollection, limit(1));
 
-    } catch (error: any) {
-      console.error('Database connection test failed:', error);
-      toast({
-        variant: 'destructive',
-        title: 'Database Connection Failed',
-        description: error.message.includes('permission-denied') 
-          ? 'Permission denied. Please check Firestore security rules.'
-          : 'Could not connect to Firestore. Please check your Firebase configuration and network.',
+    getDocs(q)
+      .then(() => {
+        toast({
+          title: 'Success',
+          description: 'Connection to the database was successful.',
+        });
+      })
+      .catch((serverError) => {
+        // Create the rich, contextual error
+        const permissionError = new FirestorePermissionError({
+          path: reportsCollection.path,
+          operation: 'list', // getDocs performs a 'list' operation
+        });
+        // Emit the error for the listener to catch
+        errorEmitter.emit('permission-error', permissionError);
+      })
+      .finally(() => {
+        setIsTestingConnection(false);
       });
-    } finally {
-      setIsTestingConnection(false);
-    }
   };
   
   const loadSavedReport = useCallback(async (reportCsv: string, reportName: string) => {
