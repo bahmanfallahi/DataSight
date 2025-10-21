@@ -19,6 +19,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+            setLoading(true);
             if (currentUser) {
                 setUser(currentUser);
                 const userRef = doc(firestore, 'users', currentUser.uid);
@@ -30,7 +31,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                     lastLogin: serverTimestamp()
                 };
 
-                // No await here, use .catch for error handling
                 setDoc(userRef, userData, { merge: true }).catch(() => {
                     const permissionError = new FirestorePermissionError({
                         path: userRef.path,
@@ -49,8 +49,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         return () => unsubscribe();
     }, []);
 
+    const value = { user, loading };
+
     return (
-        <AuthContext.Provider value={{ user, loading }}>
+        <AuthContext.Provider value={value}>
             {children}
         </AuthContext.Provider>
     );
