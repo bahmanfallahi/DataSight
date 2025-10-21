@@ -1,6 +1,8 @@
 'use client';
 import { firestore } from '@/lib/firebase';
 import { collection, addDoc, serverTimestamp, getDocs, query, orderBy } from 'firebase/firestore';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 export interface Report {
     id: string;
@@ -10,16 +12,19 @@ export interface Report {
 }
 
 export const saveReport = async (name: string, csvData: string) => {
-    try {
-        await addDoc(collection(firestore, 'reports'), {
-            name,
-            csvData,
-            createdAt: serverTimestamp(),
+    const reportsCollection = collection(firestore, 'reports');
+    addDoc(reportsCollection, {
+        name,
+        csvData,
+        createdAt: serverTimestamp(),
+    }).catch(async (serverError) => {
+        const permissionError = new FirestorePermissionError({
+            path: reportsCollection.path,
+            operation: 'create',
+            requestResourceData: { name, csvData },
         });
-    } catch (e) {
-        console.error("Error adding document: ", e);
-        throw new Error("Could not save report to Firestore.");
-    }
+        errorEmitter.emit('permission-error', permissionError);
+    });
 };
 
 
@@ -39,10 +44,16 @@ export const getReports = async (): Promise<Report[]> => {
             });
         });
         return reports;
-    } catch (e) {
+    } catch (e: any) {
+        if (e.code === 'permission-denied') {
+            const reportsCollection = collection(firestore, 'reports');
+            const permissionError = new FirestorePermissionError({
+                path: reportsCollection.path,
+                operation: 'list',
+            });
+            errorEmitter.emit('permission-error', permissionError);
+        }
         console.error("Error getting documents: ", e);
         throw new Error("Could not fetch reports from Firestore.");
     }
 };
-
-    
