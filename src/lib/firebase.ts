@@ -6,12 +6,13 @@ import {getAuth, Auth} from 'firebase/auth';
 import {getFirestore, Firestore} from 'firebase/firestore';
 
 const firebaseConfig = {
-  apiKey: "AIzaSyD3WSb1n9B87T4DajkSUgF9tN2LSs18ZX0",
+  apiKey: "AIzaSyAGUIQbCS_6gk1ex57CqnjsselquFeN-Rc",
   authDomain: "datasight-c4c56.firebaseapp.com",
   projectId: "datasight-c4c56",
-  storageBucket: "datasight-c4c56.appspot.com",
+  storageBucket: "datasight-c4c56.firebasestorage.app",
   messagingSenderId: "503654550183",
-  appId: "1:503654550183:web:a9b1c8d0e6f2f3a4b5c6d7"
+  appId: "1:503654550183:web:1dcc8567be5702a82ae982",
+  measurementId: "G-V9RV2TMN4N"
 };
 
 let app: FirebaseApp;
@@ -28,5 +29,3 @@ auth = getAuth(app);
 firestore = getFirestore(app);
 
 export { app, auth, firestore };
-
-    
