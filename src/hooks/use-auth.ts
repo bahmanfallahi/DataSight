@@ -6,7 +6,6 @@ import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { errorEmitter } from '@/firebase/error-emitter';
 
-
 interface AuthContextType {
     user: User | null;
     loading: boolean;
@@ -19,37 +18,34 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, async (user) => {
-            if (user) {
-                setUser(user);
+        const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+            if (currentUser) {
+                setUser(currentUser);
                 
-                const userRef = doc(firestore, 'users', user.uid);
-                setDoc(userRef, {
-                    uid: user.uid,
-                    email: user.email,
-                    displayName: user.displayName,
-                    photoURL: user.photoURL,
+                const userRef = doc(firestore, 'users', currentUser.uid);
+                const userData = {
+                    uid: currentUser.uid,
+                    email: currentUser.email,
+                    displayName: currentUser.displayName,
+                    photoURL: currentUser.photoURL,
                     lastLogin: serverTimestamp()
-                }, { merge: true }).catch(async () => {
+                };
+
+                setDoc(userRef, userData, { merge: true }).catch(() => {
                     const permissionError = new FirestorePermissionError({
                         path: userRef.path,
                         operation: 'update',
-                        requestResourceData: { 
-                            uid: user.uid,
-                            email: user.email,
-                            displayName: user.displayName,
-                            photoURL: user.photoURL,
-                         },
+                        requestResourceData: userData,
                     });
                     errorEmitter.emit('permission-error', permissionError);
                 });
-
             } else {
                 setUser(null);
             }
             setLoading(false);
         });
 
+        // This cleans up the listener when the component unmounts
         return () => unsubscribe();
     }, []);
 
@@ -61,7 +57,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 };
 
 export const useAuth = () => {
-    return useContext(AuthContext);
+    const context = useContext(AuthContext);
+    if (context === undefined) {
+        throw new Error('useAuth must be used within an AuthProvider');
+    }
+    return context;
 };
 
 export const signInWithGoogle = async () => {
