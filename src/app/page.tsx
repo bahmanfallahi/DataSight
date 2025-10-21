@@ -7,13 +7,16 @@ import Dashboard from '@/components/data-sight/dashboard';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { UploadCloud, Loader2, X, Save, FileClock } from 'lucide-react';
+import { UploadCloud, Loader2, X, Save, FileClock, Database } from 'lucide-react';
 import packageJson from '../../package.json';
 import { ThemeToggle } from '@/components/theme-toggle';
 import DataSightLogo from '@/components/data-sight/logo';
 import { SidebarProvider, Sidebar, SidebarTrigger, SidebarContent, SidebarHeader, SidebarMenuItem, SidebarMenu, SidebarMenuButton, SidebarInset } from '@/components/ui/sidebar';
 import SavedReports from '@/components/data-sight/saved-reports';
 import { saveReport } from '@/lib/reports';
+import { firestore } from '@/lib/firebase';
+import { collection, getDocs, limit, query } from 'firebase/firestore';
+
 
 // Helper to convert parsed data back to a CSV string
 const convertToCsvString = (parsedData: ParsedData): string => {
@@ -36,6 +39,7 @@ export default function Home() {
   const [fileName, setFileName] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isSaving, setIsSaving] = useState<boolean>(false);
+  const [isTestingConnection, setIsTestingConnection] = useState<boolean>(false);
   const { toast } = useToast();
 
   const handleFileUpload = async (event: ChangeEvent<HTMLInputElement>) => {
@@ -117,6 +121,33 @@ export default function Home() {
         });
     } finally {
         setIsSaving(false);
+    }
+  };
+
+  const handleTestConnection = async () => {
+    setIsTestingConnection(true);
+    try {
+      // Perform a simple and harmless read operation to test the connection and rules
+      const reportsCollection = collection(firestore, 'reports');
+      const q = query(reportsCollection, limit(1));
+      await getDocs(q);
+      
+      toast({
+        title: 'Success',
+        description: 'Connection to the database was successful.',
+      });
+
+    } catch (error: any) {
+      console.error('Database connection test failed:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Database Connection Failed',
+        description: error.message.includes('permission-denied') 
+          ? 'Permission denied. Please check Firestore security rules.'
+          : 'Could not connect to Firestore. Please check your Firebase configuration and network.',
+      });
+    } finally {
+      setIsTestingConnection(false);
     }
   };
   
@@ -219,6 +250,16 @@ export default function Home() {
                     Upload a CSV or Excel file to automatically profile columns, visualize distributions, and analyze trends with AI. Or load a previously saved report.
                   </p>
                   <FileUploader />
+                  <div className="mt-6">
+                    <Button variant="secondary" onClick={handleTestConnection} disabled={isTestingConnection}>
+                      {isTestingConnection ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      ) : (
+                        <Database className="mr-2 h-4 w-4" />
+                      )}
+                      Test Database Connection
+                    </Button>
+                  </div>
                 </div>
               )}
 
