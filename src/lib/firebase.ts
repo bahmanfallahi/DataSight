@@ -6,12 +6,12 @@ import {getAuth, Auth} from 'firebase/auth';
 import {getFirestore, Firestore} from 'firebase/firestore';
 
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
+  apiKey: "AIzaSyD3WSb1n9B87T4DajkSUgF9tN2LSs18ZX0",
   authDomain: "datasight-c4c56.firebaseapp.com",
   projectId: "datasight-c4c56",
   storageBucket: "datasight-c4c56.appspot.com",
-  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  messagingSenderId: "503654550183",
+  appId: "1:503654550183:web:a9b1c8d0e6f2f3a4b5c6d7"
 };
 
 let app: FirebaseApp;
