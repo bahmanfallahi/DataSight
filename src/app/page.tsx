@@ -7,17 +7,20 @@ import Dashboard from '@/components/data-sight/dashboard';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { UploadCloud, Loader2, X, Save, FileClock, Database } from 'lucide-react';
+import { UploadCloud, Loader2, X, Save, FileClock, LogIn, LogOut, Database } from 'lucide-react';
 import packageJson from '../../package.json';
 import { ThemeToggle } from '@/components/theme-toggle';
 import DataSightLogo from '@/components/data-sight/logo';
-import { SidebarProvider, Sidebar, SidebarTrigger, SidebarContent, SidebarHeader, SidebarMenuItem, SidebarMenu, SidebarMenuButton, SidebarInset } from '@/components/ui/sidebar';
+import { SidebarProvider, Sidebar, SidebarTrigger, SidebarContent, SidebarHeader, SidebarInset } from '@/components/ui/sidebar';
 import SavedReports from '@/components/data-sight/saved-reports';
 import { saveReport } from '@/lib/reports';
+import { useAuth, signInWithGoogle, signOutWithGoogle } from '@/hooks/use-auth';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { firestore } from '@/lib/firebase';
-import { collection, getDocs, limit, query } from 'firebase/firestore';
-import { errorEmitter } from '@/firebase/error-emitter';
+import { doc, getDoc } from 'firebase/firestore';
 import { FirestorePermissionError } from '@/firebase/errors';
+import { errorEmitter } from '@/firebase/error-emitter';
 
 
 // Helper to convert parsed data back to a CSV string
@@ -41,8 +44,9 @@ export default function Home() {
   const [fileName, setFileName] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isSaving, setIsSaving] = useState<boolean>(false);
-  const [isTestingConnection, setIsTestingConnection] = useState<boolean>(false);
+  const [isTesting, setIsTesting] = useState<boolean>(false);
   const { toast } = useToast();
+  const { user, loading: authLoading } = useAuth();
 
   const handleFileUpload = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -106,50 +110,27 @@ export default function Home() {
         });
         return;
     }
+    if (!user) {
+        toast({
+            variant: 'destructive',
+            title: 'Authentication Required',
+            description: 'Please log in to save your report.',
+        });
+        return;
+    }
     setIsSaving(true);
     try {
         const csvToSave = convertToCsvString(parsedData);
-        await saveReport(fileName, csvToSave);
+        await saveReport(fileName, csvToSave, user.uid);
         toast({
             title: 'Report Saved',
             description: `${fileName} has been saved successfully.`,
         });
     } catch (error) {
-        console.error('Error saving report:', error);
-        toast({
-            variant: 'destructive',
-            title: 'Error Saving Report',
-            description: 'Could not save the report. Please try again.',
-        });
+        // Error is handled by the global error handler
     } finally {
         setIsSaving(false);
     }
-  };
-
-  const handleTestConnection = () => {
-    setIsTestingConnection(true);
-    const reportsCollection = collection(firestore, 'reports');
-    const q = query(reportsCollection, limit(1));
-
-    getDocs(q)
-      .then(() => {
-        toast({
-          title: 'Success',
-          description: 'Connection to the database was successful.',
-        });
-      })
-      .catch((serverError) => {
-        // Create the rich, contextual error
-        const permissionError = new FirestorePermissionError({
-          path: reportsCollection.path,
-          operation: 'list', // getDocs performs a 'list' operation
-        });
-        // Emit the error for the listener to catch
-        errorEmitter.emit('permission-error', permissionError);
-      })
-      .finally(() => {
-        setIsTestingConnection(false);
-      });
   };
   
   const loadSavedReport = useCallback(async (reportCsv: string, reportName: string) => {
@@ -180,6 +161,26 @@ export default function Home() {
        setIsLoading(false);
     }
   }, [toast]);
+  
+  const handleTestConnection = async () => {
+    setIsTesting(true);
+    try {
+        const testDocRef = doc(firestore, 'test', 'test');
+        await getDoc(testDocRef);
+        toast({
+            title: 'Connection Successful',
+            description: 'Successfully connected to the database.',
+        });
+    } catch (error) {
+       const permissionError = new FirestorePermissionError({
+            path: 'test/test',
+            operation: 'get',
+        });
+        errorEmitter.emit('permission-error', permissionError);
+    } finally {
+        setIsTesting(false);
+    }
+  };
 
 
   const FileUploader = () => (
@@ -197,8 +198,55 @@ export default function Home() {
           disabled={isLoading}
         />
       </div>
+       <Button onClick={handleTestConnection} disabled={isTesting} className="mt-4">
+        {isTesting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Database className="mr-2 h-4 w-4" />}
+        Test Database Connection
+      </Button>
     </div>
   );
+
+  const UserProfile = () => {
+    if (authLoading) {
+      return <Loader2 className="h-6 w-6 animate-spin" />;
+    }
+
+    if (!user) {
+      return (
+        <Button variant="outline" onClick={signInWithGoogle}>
+          <LogIn className="mr-2 h-4 w-4" />
+          Login with Google
+        </Button>
+      );
+    }
+
+    return (
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+            <Avatar className="h-8 w-8">
+              <AvatarImage src={user.photoURL ?? ''} alt={user.displayName ?? ''} />
+              <AvatarFallback>{user.displayName?.charAt(0)}</AvatarFallback>
+            </Avatar>
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent className="w-56" align="end" forceMount>
+          <DropdownMenuLabel className="font-normal">
+            <div className="flex flex-col space-y-1">
+              <p className="text-sm font-medium leading-none">{user.displayName}</p>
+              <p className="text-xs leading-none text-muted-foreground">
+                {user.email}
+              </p>
+            </div>
+          </DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={signOutWithGoogle}>
+            <LogOut className="mr-2 h-4 w-4" />
+            <span>Log out</span>
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    );
+  };
 
   return (
     <SidebarProvider>
@@ -222,20 +270,23 @@ export default function Home() {
                 <DataSightLogo className="h-7 w-7" />
                 <h1 className="text-2xl font-bold tracking-tight">DataSight</h1>
               </div>
-              <div className="flex items-center gap-2">
-                {parsedData && (
+              <div className="flex items-center gap-4">
+                {parsedData && user && (
                   <>
                     <Button variant="outline" size="sm" onClick={handleSaveData} disabled={isSaving}>
                       {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                      Save Data
+                      Save Report
                     </Button>
+                  </>
+                )}
+                 {parsedData && (
                     <Button variant="ghost" size="sm" onClick={handleReset}>
                       <X className="mr-2 h-4 w-4" />
                       Clear Data
                     </Button>
-                  </>
                 )}
                 <ThemeToggle />
+                <UserProfile />
               </div>
             </div>
           </header>
@@ -248,19 +299,9 @@ export default function Home() {
                     Unlock Insights From Your Data
                   </h2>
                   <p className="max-w-2xl text-lg text-muted-foreground mb-8">
-                    Upload a CSV or Excel file to automatically profile columns, visualize distributions, and analyze trends with AI. Or load a previously saved report.
+                    Upload a CSV or Excel file to automatically profile columns, visualize distributions, and analyze trends with AI. Or log in to load a previously saved report.
                   </p>
                   <FileUploader />
-                  <div className="mt-6">
-                    <Button variant="secondary" onClick={handleTestConnection} disabled={isTestingConnection}>
-                      {isTestingConnection ? (
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      ) : (
-                        <Database className="mr-2 h-4 w-4" />
-                      )}
-                      Test Database Connection
-                    </Button>
-                  </div>
                 </div>
               )}
 

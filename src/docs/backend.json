@@ -1,0 +1,54 @@
+{
+  "entities": {
+    "userProfile": {
+      "title": "User Profile",
+      "description": "Represents a user's profile information.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "The user's unique ID." },
+        "email": { "type": "string", "format": "email", "description": "The user's email address." },
+        "displayName": { "type": "string", "description": "The user's display name." },
+        "photoURL": { "type": "string", "format": "uri", "description": "URL of the user's profile picture." }
+      },
+      "required": ["uid", "email"]
+    },
+    "report": {
+      "title": "Report",
+      "description": "A saved data analysis report.",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The name of the report file."
+        },
+        "csvData": {
+          "type": "string",
+          "description": "The full CSV content of the report."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The timestamp when the report was saved."
+        },
+        "userId": {
+          "type": "string",
+          "description": "The UID of the user who saved the report."
+        }
+      },
+      "required": ["name", "csvData", "createdAt", "userId"]
+    }
+  },
+  "auth": {
+    "providers": ["google.com"]
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/userProfile" },
+      "description": "Stores user profile information."
+    },
+    "/users/{userId}/reports/{reportId}": {
+      "schema": { "$ref": "#/entities/report" },
+      "description": "Stores user-saved data analysis reports."
+    }
+  }
+}
