@@ -11,14 +11,28 @@ import { UploadCloud, Loader2, X, Save, FileClock } from 'lucide-react';
 import packageJson from '../../package.json';
 import { ThemeToggle } from '@/components/theme-toggle';
 import DataSightLogo from '@/components/data-sight/logo';
-import { SidebarProvider, Sidebar, SidebarTrigger, SidebarContent, SidebarHeader, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarInset } from '@/components/ui/sidebar';
+import { SidebarProvider, Sidebar, SidebarTrigger, SidebarContent, SidebarHeader, SidebarMenuItem, SidebarMenu, SidebarMenuButton, SidebarInset } from '@/components/ui/sidebar';
 import SavedReports from '@/components/data-sight/saved-reports';
 import { saveReport } from '@/lib/reports';
+
+// Helper to convert parsed data back to a CSV string
+const convertToCsvString = (parsedData: ParsedData): string => {
+  const headers = parsedData.headers.join(',');
+  const rows = parsedData.data.map(row =>
+    parsedData.headers.map(header => {
+      const value = row[header];
+      // Handle values that might contain commas by wrapping them in quotes
+      const formattedValue = typeof value === 'string' && value.includes(',') ? `"${value}"` : value;
+      return formattedValue;
+    }).join(',')
+  ).join('\n');
+  return `${headers}\n${rows}`;
+};
+
 
 export default function Home() {
   const [parsedData, setParsedData] = useState<ParsedData | null>(null);
   const [columnAnalysis, setColumnAnalysis] = useState<ColumnAnalysis[] | null>(null);
-  const [csvData, setCsvData] = useState<string>('');
   const [fileName, setFileName] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isSaving, setIsSaving] = useState<boolean>(false);
@@ -47,28 +61,14 @@ export default function Home() {
     setFileName(file.name);
 
     try {
-      let rawDataForAI = '';
-      if (file.type === 'text/csv') {
-        rawDataForAI = await file.text();
-      }
-      
       const parsed = await parseDataFile(file);
-
-      if (file.type !== 'text/csv') {
-          let csvString = parsed.headers.join(',') + '\n';
-          csvString += parsed.data.map(row => 
-              parsed.headers.map(header => row[header]).join(',')
-          ).join('\n');
-          rawDataForAI = csvString;
-      }
-
-
+      
       if (parsed.data.length === 0) {
         throw new Error('File is empty or could not be parsed.');
       }
+      
       const analysis = analyzeColumns(parsed.data, parsed.headers);
 
-      setCsvData(rawDataForAI);
       setParsedData(parsed);
       setColumnAnalysis(analysis);
     } catch (error) {
@@ -87,13 +87,12 @@ export default function Home() {
   const handleReset = () => {
     setParsedData(null);
     setColumnAnalysis(null);
-    setCsvData('');
     setFileName('');
     setIsLoading(false);
   };
   
   const handleSaveData = async () => {
-    if (!csvData || !fileName) {
+    if (!parsedData || !fileName) {
         toast({
             variant: 'destructive',
             title: 'No Data to Save',
@@ -103,7 +102,8 @@ export default function Home() {
     }
     setIsSaving(true);
     try {
-        await saveReport(fileName, csvData);
+        const csvToSave = convertToCsvString(parsedData);
+        await saveReport(fileName, csvToSave);
         toast({
             title: 'Report Saved',
             description: `${fileName} has been saved successfully.`,
@@ -120,18 +120,22 @@ export default function Home() {
     }
   };
   
-  const loadSavedReport = useCallback((reportCsv: string, reportName: string) => {
+  const loadSavedReport = useCallback(async (reportCsv: string, reportName: string) => {
+    setIsLoading(true);
+    setFileName(reportName);
     try {
-      setIsLoading(true);
-      const parsed = analyzeColumns(
-        parseDataFile(new File([reportCsv], reportName, { type: 'text/csv' })).data,
-        parseDataFile(new File([reportCsv], reportName, { type: 'text/csv' })).headers
-      );
-      setFileName(reportName);
-      setCsvData(reportCsv);
-      const parsedData = parseDataFile(new File([reportCsv], reportName, { type: 'text/csv' }));
-      setParsedData(parsedData);
-      setColumnAnalysis(analyzeColumns(parsedData.data, parsedData.headers));
+      const file = new File([reportCsv], reportName, { type: 'text/csv' });
+      const parsed = await parseDataFile(file);
+      
+      if (parsed.data.length === 0) {
+        throw new Error('Saved report is empty or corrupted.');
+      }
+      
+      const analysis = analyzeColumns(parsed.data, parsed.headers);
+      
+      setParsedData(parsed);
+      setColumnAnalysis(analysis);
+
     } catch (error) {
        console.error('Error loading saved report:', error);
        toast({
@@ -206,7 +210,7 @@ export default function Home() {
 
           <main className="flex-1">
             <div className="container mx-auto px-4 md:px-6 py-8">
-              {!parsedData && (
+              {!parsedData && !isLoading && (
                 <div className="flex flex-col items-center justify-center text-center py-16">
                   <h2 className="text-4xl lg:text-5xl font-extrabold tracking-tight mb-4">
                     Unlock Insights From Your Data
@@ -214,18 +218,22 @@ export default function Home() {
                   <p className="max-w-2xl text-lg text-muted-foreground mb-8">
                     Upload a CSV or Excel file to automatically profile columns, visualize distributions, and analyze trends with AI. Or load a previously saved report.
                   </p>
-                  {isLoading ? (
-                    <div className="flex flex-col items-center gap-4">
-                      <Loader2 className="h-12 w-12 animate-spin text-primary" />
-                      <p className="text-muted-foreground">Analyzing "{fileName}"...</p>
-                    </div>
-                  ) : (
-                    <FileUploader />
-                  )}
+                  <FileUploader />
                 </div>
               )}
 
-              {parsedData && columnAnalysis && (
+               {isLoading && (
+                <div className="flex flex-col items-center justify-center text-center py-16">
+                    <div className="flex flex-col items-center gap-4">
+                      <Loader2 className="h-12 w-12 animate-spin text-primary" />
+                      <p className="text-muted-foreground">
+                        {fileName ? `Analyzing "${fileName}"...` : 'Loading...'}
+                      </p>
+                    </div>
+                </div>
+               )}
+
+              {parsedData && columnAnalysis && !isLoading && (
                 <Dashboard
                   parsedData={parsedData}
                   columnAnalysis={columnAnalysis}
@@ -250,5 +258,3 @@ export default function Home() {
     </SidebarProvider>
   );
 }
-
-    
