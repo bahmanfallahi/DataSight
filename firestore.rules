@@ -1,0 +1,13 @@
+
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Allow anyone to read and create reports.
+    // In a real application, you would want to restrict this to authenticated users.
+    match /reports/{reportId} {
+      allow read, create: if true;
+    }
+  }
+}
