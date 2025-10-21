@@ -2,16 +2,16 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Default to denying all access
+    // By default, deny all reads and writes.
     match /{document=**} {
       allow read, write: if false;
     }
 
-    // Allow anyone to read and create documents in the 'reports' collection.
-    // This is necessary for the "Save Report" and "Saved Reports" features to work
-    // without user authentication.
+    // Allow public read and write access to the 'reports' collection
     match /reports/{reportId} {
       allow read, create: if true;
+      // Future-proofing: Only the creator can update/delete their own report
+      allow update, delete: if request.auth != null && request.auth.uid == resource.data.uid;
     }
   }
 }
