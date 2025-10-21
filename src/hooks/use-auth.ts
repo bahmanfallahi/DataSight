@@ -21,7 +21,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
             if (currentUser) {
                 setUser(currentUser);
-                
                 const userRef = doc(firestore, 'users', currentUser.uid);
                 const userData = {
                     uid: currentUser.uid,
@@ -45,7 +44,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             setLoading(false);
         });
 
-        // This cleans up the listener when the component unmounts
+        // Cleanup subscription on unmount
         return () => unsubscribe();
     }, []);
 
