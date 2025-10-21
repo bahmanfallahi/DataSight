@@ -30,6 +30,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                     lastLogin: serverTimestamp()
                 };
 
+                // No await here, use .catch for error handling
                 setDoc(userRef, userData, { merge: true }).catch(() => {
                     const permissionError = new FirestorePermissionError({
                         path: userRef.path,
