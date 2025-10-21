@@ -3,15 +3,14 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    // By default, deny all reads and writes
-    match /{document=**} {
-      allow read, write: if false;
+    match /reports/{reportId} {
+      // Allow anyone to read and create reports for now.
+      // In a real application, you would restrict this based on user authentication.
+      allow read, create: if true;
     }
 
-    // Allow anyone to read and create reports.
-    // This is insecure and should be updated once authentication is added.
-    match /reports/{reportId} {
-      allow list, get, create: if true;
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 }
