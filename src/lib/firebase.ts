@@ -1,18 +1,15 @@
-// IMPORTANT: This file is a placeholder for Firebase configuration.
-// You must replace it with your actual Firebase configuration.
 
 import {initializeApp, getApp, getApps, FirebaseApp} from 'firebase/app';
 import {getAuth, Auth} from 'firebase/auth';
 import {getFirestore, Firestore} from 'firebase/firestore';
 
 const firebaseConfig = {
-  apiKey: "AIzaSyAGUIQbCS_6gk1ex57CqnjsselquFeN-Rc",
-  authDomain: "datasight-c4c56.firebaseapp.com",
-  projectId: "datasight-c4c56",
-  storageBucket: "datasight-c4c56.firebasestorage.app",
-  messagingSenderId: "503654550183",
-  appId: "1:503654550183:web:1dcc8567be5702a82ae982",
-  measurementId: "G-V9RV2TMN4N"
+  apiKey: "AIzaSyC1-YxpYHgJbTp2OGd1cLesvIk4Kc_8bL4",
+  authDomain: "fiberflex-coupons.firebaseapp.com",
+  projectId: "fiberflex-coupons",
+  storageBucket: "fiberflex-coupons.firebasestorage.app",
+  messagingSenderId: "822507312207",
+  appId: "1:822507312207:web:85391c759ed5e9fcb1863a"
 };
 
 let app: FirebaseApp;
