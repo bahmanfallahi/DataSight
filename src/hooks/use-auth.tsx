@@ -1,53 +1,49 @@
 'use client';
-import { useEffect, useState, useContext, createContext, ReactNode } from 'react';
-import { onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut, type User } from 'firebase/auth';
-import { auth, firestore } from '@/lib/firebase';
-import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
-import { FirestorePermissionError } from '@/firebase/errors';
-import { errorEmitter } from '@/firebase/error-emitter';
+import { useState, useContext, createContext, ReactNode } from 'react';
+import type { User } from 'firebase/auth';
 
 interface AuthContextType {
     user: User | null;
     loading: boolean;
 }
 
+// Create a mock user object
+const defaultUser: User = {
+    uid: 'default-user-uid',
+    email: 'bahman.f.behtash@gmail.com',
+    displayName: 'Bahman Behtash',
+    photoURL: 'https://placehold.co/100x100/3b82f6/FFFFFF/png?text=BB',
+    providerId: 'default',
+    emailVerified: true,
+    isAnonymous: false,
+    metadata: {
+        creationTime: new Date().toUTCString(),
+        lastSignInTime: new Date().toUTCString(),
+    },
+    providerData: [],
+    // Add dummy implementations for methods to satisfy the type
+    delete: async () => {},
+    getIdToken: async () => 'mock-id-token',
+    getIdTokenResult: async () => ({
+        token: 'mock-id-token',
+        expirationTime: '',
+        authTime: '',
+        issuedAtTime: '',
+        signInProvider: null,
+        signInSecondFactor: null,
+        claims: {},
+    }),
+    reload: async () => {},
+    toJSON: () => ({}),
+};
+
+
 const AuthContext = createContext<AuthContextType>({ user: null, loading: true });
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-    const [user, setUser] = useState<User | null>(null);
-    const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-            if (currentUser) {
-                setUser(currentUser);
-                const userRef = doc(firestore, 'users', currentUser.uid);
-                const userData = {
-                    uid: currentUser.uid,
-                    email: currentUser.email,
-                    displayName: currentUser.displayName,
-                    photoURL: currentUser.photoURL,
-                    lastLogin: serverTimestamp()
-                };
-
-                // Using .catch for error handling as per Firebase best practices for non-blocking UI
-                setDoc(userRef, userData, { merge: true }).catch(() => {
-                    const permissionError = new FirestorePermissionError({
-                        path: userRef.path,
-                        operation: 'update',
-                        requestResourceData: userData,
-                    });
-                    errorEmitter.emit('permission-error', permissionError);
-                });
-            } else {
-                setUser(null);
-            }
-            setLoading(false);
-        });
-
-        // Cleanup subscription on unmount
-        return () => unsubscribe();
-    }, []);
+    // Set the default user and finish loading immediately.
+    const [user] = useState<User | null>(defaultUser);
+    const [loading] = useState(false);
 
     const value = { user, loading };
 
@@ -66,21 +62,11 @@ export const useAuth = () => {
     return context;
 };
 
+// Mock the sign-in and sign-out functions since we have a default user.
 export const signInWithGoogle = async () => {
-    const provider = new GoogleAuthProvider();
-    try {
-        await signInWithPopup(auth, provider);
-    } catch (error) {
-        console.error("Error signing in with Google: ", error);
-        // Optionally, you can show a toast to the user here
-    }
+    console.log("Sign-in is disabled; using default user.");
 };
 
 export const signOutWithGoogle = async () => {
-    try {
-        await signOut(auth);
-    } catch (error) {
-        console.error("Error signing out: ", error);
-        // Optionally, you can show a toast to the user here
-    }
+    console.log("Sign-out is disabled; using default user.");
 };
