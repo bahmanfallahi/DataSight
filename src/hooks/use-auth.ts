@@ -19,7 +19,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-            setLoading(true);
             if (currentUser) {
                 setUser(currentUser);
                 const userRef = doc(firestore, 'users', currentUser.uid);
@@ -31,6 +30,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                     lastLogin: serverTimestamp()
                 };
 
+                // Using .catch for error handling as per Firebase best practices for non-blocking UI
                 setDoc(userRef, userData, { merge: true }).catch(() => {
                     const permissionError = new FirestorePermissionError({
                         path: userRef.path,
@@ -72,6 +72,7 @@ export const signInWithGoogle = async () => {
         await signInWithPopup(auth, provider);
     } catch (error) {
         console.error("Error signing in with Google: ", error);
+        // Optionally, you can show a toast to the user here
     }
 };
 
@@ -80,5 +81,6 @@ export const signOutWithGoogle = async () => {
         await signOut(auth);
     } catch (error) {
         console.error("Error signing out: ", error);
+        // Optionally, you can show a toast to the user here
     }
 };
