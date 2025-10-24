@@ -13,7 +13,7 @@ import { ThemeToggle } from '@/components/theme-toggle';
 import DataSightLogo from '@/components/data-sight/logo';
 import { SidebarProvider, Sidebar, SidebarTrigger, SidebarContent, SidebarHeader, SidebarInset, SidebarFooter, SidebarMenu, SidebarMenuItem, SidebarMenuButton } from '@/components/ui/sidebar';
 import SavedReports from '@/components/data-sight/saved-reports';
-import { saveReport, getReports, type Report } from '@/lib/reports';
+import { getReports, type Report } from '@/lib/reports';
 import { useAuth, signOutUser, type UserProfile } from '@/hooks/use-auth';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -58,10 +58,9 @@ export default function Home() {
   }, [authLoading, user, router]);
   
   const fetchReports = useCallback(async () => {
-    if (!user) return; // Don't fetch if no user
     setIsLoadingReports(true);
     try {
-        const fetchedReports = await getReports(user.uid);
+        const fetchedReports = await getReports();
         setReports(fetchedReports);
     } catch (error) {
         console.error(error);
@@ -69,7 +68,7 @@ export default function Home() {
     } finally {
         setIsLoadingReports(false);
     }
-  }, [user]);
+  }, []);
 
   useEffect(() => {
     // Only fetch reports if there's a user.
