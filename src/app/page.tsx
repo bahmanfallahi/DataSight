@@ -13,7 +13,7 @@ import { ThemeToggle } from '@/components/theme-toggle';
 import DataSightLogo from '@/components/data-sight/logo';
 import { SidebarProvider, Sidebar, SidebarTrigger, SidebarContent, SidebarHeader, SidebarInset, SidebarFooter, SidebarMenu, SidebarMenuItem, SidebarMenuButton } from '@/components/ui/sidebar';
 import SavedReports from '@/components/data-sight/saved-reports';
-import { getReports, type Report } from '@/lib/reports';
+import { getReports, type Report, saveReport } from '@/lib/reports';
 import { useAuth, signOutUser, type UserProfile } from '@/hooks/use-auth';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
