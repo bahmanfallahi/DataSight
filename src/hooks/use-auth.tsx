@@ -6,6 +6,8 @@ import {
     type User,
     signInWithEmailAndPassword,
     createUserWithEmailAndPassword,
+    reauthenticateWithCredential,
+    EmailAuthProvider,
 } from 'firebase/auth';
 import { auth, firestore } from '@/lib/firebase';
 import { doc, setDoc, serverTimestamp, getDoc } from 'firebase/firestore';
@@ -17,6 +19,12 @@ import type { AddUserData } from '@/components/add-user-form';
 interface AuthContextType {
     user: User | null;
     loading: boolean;
+}
+
+interface SignUpParams {
+    newUser: AddUserData;
+    adminEmail: string;
+    adminPassword: string;
 }
 
 const AuthContext = createContext<AuthContextType>({ user: null, loading: true });
@@ -91,10 +99,20 @@ const createUserProfileDocument = async (user: User, additionalData?: { displayN
     }
 }
 
-export const signUpWithEmail = async ({ email, password, displayName }: AddUserData) => {
-    const { user } = await createUserWithEmailAndPassword(auth, email, password);
-    await createUserProfileDocument(user, { displayName });
-    return user;
+export const signUpWithEmail = async ({ newUser, adminEmail, adminPassword }: SignUpParams) => {
+    // 1. Create the new user. This will unfortunately sign the admin out and sign in as the new user.
+    const { user: newAuthUser } = await createUserWithEmailAndPassword(auth, newUser.email, newUser.password);
+
+    // 2. Create the Firestore document for the new user.
+    await createUserProfileDocument(newAuthUser, { displayName: newUser.displayName });
+
+    // 3. Sign the new user out to restore the admin's session.
+    await signOut(auth);
+
+    // 4. Sign the admin back in.
+    await signInWithEmailAndPassword(auth, adminEmail, adminPassword);
+
+    return newAuthUser;
 };
 
 
