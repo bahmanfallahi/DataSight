@@ -58,9 +58,10 @@ export default function Home() {
   }, [authLoading, user, router]);
   
   const fetchReports = useCallback(async () => {
+    if (!user) return; // Don't fetch if no user
     setIsLoadingReports(true);
     try {
-        const fetchedReports = await getReports();
+        const fetchedReports = await getReports(user.uid);
         setReports(fetchedReports);
     } catch (error) {
         console.error(error);
@@ -68,7 +69,7 @@ export default function Home() {
     } finally {
         setIsLoadingReports(false);
     }
-  }, []);
+  }, [user]);
 
   useEffect(() => {
     // Only fetch reports if there's a user.

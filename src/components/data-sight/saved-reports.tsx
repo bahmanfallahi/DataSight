@@ -6,7 +6,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { FileText, Trash2, Loader2 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useAuth, type UserProfile } from '@/hooks/use-auth';
+import { type UserProfile } from '@/hooks/use-auth';
 import {
   AlertDialog,
   AlertDialogAction,
