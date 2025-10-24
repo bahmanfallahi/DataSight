@@ -58,6 +58,7 @@ export default function Home() {
   }, [authLoading, user, router]);
   
   const fetchReports = useCallback(async () => {
+    if (!user) return;
     setIsLoadingReports(true);
     try {
         const fetchedReports = await getReports();
@@ -68,7 +69,7 @@ export default function Home() {
     } finally {
         setIsLoadingReports(false);
     }
-  }, []);
+  }, [user]);
 
   useEffect(() => {
     if (user) {
