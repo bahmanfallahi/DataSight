@@ -7,7 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Loader2, Trash2, Users, ShieldCheck, Home } from 'lucide-react';
+import { Loader2, Trash2, Users, ShieldCheck, Home, PlusCircle } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -20,6 +20,16 @@ import {
 } from "@/components/ui/alert-dialog"
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
+import { AddUserForm } from '@/components/add-user-form';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
+
 
 export default function SettingsPage() {
   const { user, loading: authLoading } = useAuth();
@@ -28,6 +38,7 @@ export default function SettingsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [userToDelete, setUserToDelete] = useState<UserProfile | null>(null);
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
+  const [isAddUserOpen, setIsAddUserOpen] = useState(false);
   const { toast } = useToast();
 
   const isAdmin = user?.email === 'bahman.f.behtash@gmail.com';
@@ -95,6 +106,11 @@ export default function SettingsPage() {
     }
   };
 
+  const onUserAdded = () => {
+    setIsAddUserOpen(false);
+    fetchUsers();
+  }
+
   if (authLoading || isLoading) {
     return (
       <div className="flex h-screen items-center justify-center">
@@ -119,12 +135,31 @@ export default function SettingsPage() {
       </header>
       <main className="container mx-auto px-4 py-8 md:px-6">
         <Card>
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <Users className="h-5 w-5" />
-              <CardTitle>User Management</CardTitle>
+          <CardHeader className="flex flex-row items-start justify-between">
+            <div>
+              <div className="flex items-center gap-2">
+                <Users className="h-5 w-5" />
+                <CardTitle>User Management</CardTitle>
+              </div>
+              <CardDescription>View and manage all registered users in the application.</CardDescription>
             </div>
-            <CardDescription>View and manage all registered users in the application.</CardDescription>
+             <Dialog open={isAddUserOpen} onOpenChange={setIsAddUserOpen}>
+              <DialogTrigger asChild>
+                <Button>
+                  <PlusCircle className="mr-2 h-4 w-4" />
+                  Add New User
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[425px]">
+                <DialogHeader>
+                  <DialogTitle>Create New User</DialogTitle>
+                  <DialogDescription>
+                    Enter the details for the new user account.
+                  </DialogDescription>
+                </DialogHeader>
+                <AddUserForm onUserAdded={onUserAdded} />
+              </DialogContent>
+            </Dialog>
           </CardHeader>
           <CardContent>
             <Table>

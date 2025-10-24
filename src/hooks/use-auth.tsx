@@ -11,7 +11,8 @@ import { auth, firestore } from '@/lib/firebase';
 import { doc, setDoc, serverTimestamp, getDoc } from 'firebase/firestore';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { errorEmitter } from '@/firebase/error-emitter';
-import type { SignUpData, SignInData } from '@/components/auth-form';
+import type { SignInData } from '@/components/auth-form';
+import type { AddUserData } from '@/components/add-user-form';
 
 interface AuthContextType {
     user: User | null;
@@ -90,19 +91,27 @@ const createUserProfileDocument = async (user: User, additionalData?: { displayN
     }
 }
 
-
-export const signUpWithEmail = async ({ email, password, displayName }: SignUpData) => {
-    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-    const user = userCredential.user;
+export const signUpWithEmail = async ({ email, password, displayName }: AddUserData) => {
+    const { user } = await createUserWithEmailAndPassword(auth, email, password);
     await createUserProfileDocument(user, { displayName });
-    return userCredential;
-}
+    return user;
+};
 
 
 export const signInWithEmail = async ({ email, password }: SignInData) => {
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
     const { user } = userCredential;
-    await createUserProfileDocument(user);
+    // We only update the last login time, profile is created on sign up.
+    const userRef = doc(firestore, 'users', user.uid);
+    setDoc(userRef, { lastLogin: serverTimestamp() }, { merge: true }).catch((err) => {
+        const permissionError = new FirestorePermissionError({
+            path: userRef.path,
+            operation: 'update',
+            requestResourceData: { lastLogin: 'serverTimestamp' },
+        });
+        errorEmitter.emit('permission-error', permissionError);
+    });
+
     return userCredential;
 }
 
