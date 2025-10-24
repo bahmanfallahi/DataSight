@@ -71,6 +71,9 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
+    // Only fetch reports if there's a user.
+    // The auth state change in AuthProvider will trigger this
+    // when the user logs in.
     if (user) {
       fetchReports();
     }
@@ -297,7 +300,7 @@ export default function Home() {
     );
   };
   
-  if (authLoading || (!user && router.pathname !== '/login')) {
+  if (authLoading) {
     return (
       <div className="flex h-screen items-center justify-center">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />

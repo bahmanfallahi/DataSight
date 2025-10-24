@@ -45,22 +45,35 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
             setLoading(true);
             if (currentUser) {
+                // Set user immediately to avoid UI flicker
                 setUser(currentUser);
-                const userDocRef = doc(firestore, 'users', currentUser.uid);
-                const userDoc = await getDoc(userDocRef);
-                if (userDoc.exists()) {
-                    setUserProfile(userDoc.data() as UserProfile);
-                } else {
-                    // This is a fallback for manually created users in Auth without a profile
-                    const profile: UserProfile = {
-                        uid: currentUser.uid,
-                        email: currentUser.email,
-                        displayName: currentUser.displayName || currentUser.email?.split('@')[0] || 'User',
-                        photoURL: currentUser.photoURL,
-                        role: 'expert' // Safely default to 'expert'
-                    };
-                    await setDoc(userDocRef, { ...profile, createdAt: serverTimestamp() });
-                    setUserProfile(profile);
+                try {
+                    const userDocRef = doc(firestore, 'users', currentUser.uid);
+                    const userDoc = await getDoc(userDocRef);
+
+                    if (userDoc.exists()) {
+                        setUserProfile(userDoc.data() as UserProfile);
+                    } else {
+                        // This case can happen if a user is created in Auth but their
+                        // profile document fails to be created in Firestore.
+                        // We default to 'expert' and log an error.
+                        console.warn(`No profile found for user ${currentUser.uid}, creating a default one.`);
+                        const profile: UserProfile = {
+                            uid: currentUser.uid,
+                            email: currentUser.email,
+                            displayName: currentUser.displayName || currentUser.email?.split('@')[0] || 'User',
+                            photoURL: currentUser.photoURL,
+                            role: 'expert' // Default to the least privileged role
+                        };
+                        await setDoc(userDocRef, { ...profile, createdAt: serverTimestamp() });
+                        setUserProfile(profile);
+                    }
+                } catch (error) {
+                    console.error("Error fetching user profile:", error);
+                    // If fetching fails, sign the user out to prevent an inconsistent state
+                    await signOut(auth);
+                    setUser(null);
+                    setUserProfile(null);
                 }
             } else {
                 setUser(null);
@@ -69,9 +82,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             setLoading(false);
         });
 
-        // Cleanup subscription on unmount
-        return () => unsubscribe();
+        return () => unsubscribe(); // Cleanup on unmount
     }, []);
+
 
     const value = { user, userProfile, loading };
 
@@ -142,6 +155,8 @@ export const signInWithEmail = async ({ email, password }: SignInData) => {
     const userRef = doc(firestore, 'users', user.uid);
     // Update last login time. Profile is fetched by AuthProvider on state change.
     await setDoc(userRef, { lastLogin: serverTimestamp() }, { merge: true }).catch((err) => {
+        // This is not a critical error, so we just emit it for debugging
+        // without blocking the user's login flow.
         const permissionError = new FirestorePermissionError({
             path: userRef.path,
             operation: 'update',
