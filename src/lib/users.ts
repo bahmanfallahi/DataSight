@@ -20,7 +20,7 @@ export async function getAllUsers(): Promise<UserProfile[]> {
             users.push({
                 uid: doc.id,
                 email: data.email,
-                displayName: data.displayName || null,
+                displayName: data.displayName || data.email?.split('@')[0] || 'N/A',
                 photoURL: data.photoURL || null,
                 role: data.role || 'expert',
             });

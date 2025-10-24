@@ -28,11 +28,13 @@ import {
     AlertDialogAction,
     AlertDialogCancel,
 } from '@/components/ui/alert-dialog';
+import { RadioGroup, RadioGroupItem } from './ui/radio-group';
 
 const addUserSchema = z.object({
   email: z.string().email({ message: 'Please enter a valid email address.' }),
   password: z.string().min(8, { message: 'Password must be at least 8 characters long.' }),
   displayName: z.string().min(2, { message: 'Name must be at least 2 characters long.' }),
+  role: z.enum(['admin', 'expert'], { required_error: 'You must select a role.'}),
 });
 
 export type AddUserData = z.infer<typeof addUserSchema>;
@@ -55,6 +57,7 @@ export function AddUserForm({ onUserAdded }: AddUserFormProps) {
         email: '',
         password: '',
         displayName: '',
+        role: 'expert',
     }
   });
 
@@ -66,7 +69,7 @@ export function AddUserForm({ onUserAdded }: AddUserFormProps) {
   const handleConfirmCreateUser = async () => {
     const adminPassword = adminPasswordRef.current?.value;
 
-    if (!adminPassword || !adminUser || !newUserPayload) {
+    if (!adminPassword || !adminUser?.email || !newUserPayload) {
         toast({
             variant: "destructive",
             title: "Error",
@@ -81,7 +84,7 @@ export function AddUserForm({ onUserAdded }: AddUserFormProps) {
     try {
         await signUpWithEmail({
             newUser: newUserPayload,
-            adminEmail: adminUser.email!,
+            adminEmail: adminUser.email,
             adminPassword: adminPassword,
         });
         toast({ title: 'User Created', description: "The new user account has been successfully created." });
@@ -151,6 +154,36 @@ export function AddUserForm({ onUserAdded }: AddUserFormProps) {
                             <FormLabel>Password</FormLabel>
                             <FormControl>
                                 <Input placeholder="••••••••" type="password" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+                <FormField
+                    control={form.control}
+                    name="role"
+                    render={({ field }) => (
+                        <FormItem className="space-y-3">
+                            <FormLabel>Role</FormLabel>
+                             <FormControl>
+                                <RadioGroup
+                                onValueChange={field.onChange}
+                                defaultValue={field.value}
+                                className="flex flex-row space-x-4"
+                                >
+                                <FormItem className="flex items-center space-x-2 space-y-0">
+                                    <FormControl>
+                                    <RadioGroupItem value="expert" />
+                                    </FormControl>
+                                    <FormLabel className="font-normal">Expert</FormLabel>
+                                </FormItem>
+                                <FormItem className="flex items-center space-x-2 space-y-0">
+                                    <FormControl>
+                                    <RadioGroupItem value="admin" />
+                                    </FormControl>
+                                    <FormLabel className="font-normal">Admin</FormLabel>
+                                </FormItem>
+                                </RadioGroup>
                             </FormControl>
                             <FormMessage />
                         </FormItem>

@@ -48,6 +48,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 const userDoc = await getDoc(doc(firestore, 'users', currentUser.uid));
                 if (userDoc.exists()) {
                     setUserProfile(userDoc.data() as UserProfile);
+                } else {
+                    // If user exists in Auth but not Firestore, create their profile
+                    // This can happen for users created before the profile logic was in place
+                    const profile = {
+                        uid: currentUser.uid,
+                        email: currentUser.email,
+                        displayName: currentUser.displayName || currentUser.email?.split('@')[0],
+                        photoURL: currentUser.photoURL,
+                        role: 'expert' // Default to 'expert' for safety
+                    };
+                    await setDoc(doc(firestore, 'users', currentUser.uid), {
+                        ...profile,
+                        createdAt: serverTimestamp()
+                    });
+                    setUserProfile(profile);
                 }
             } else {
                 setUserProfile(null);
@@ -105,14 +120,16 @@ const createUserProfileDocument = async (user: User, additionalData: { displayNa
 }
 
 export const signUpWithEmail = async ({ newUser, adminEmail, adminPassword }: SignUpParams) => {
+    // 1. Create the new user. This will unfortunately sign the admin out and sign in as the new user.
     const { user: newAuthUser } = await createUserWithEmailAndPassword(auth, newUser.email, newUser.password);
     
+    // 2. Create the Firestore document for the new user.
     await createUserProfileDocument(newAuthUser, {
       displayName: newUser.displayName,
       role: newUser.role,
     });
   
-    // Sign out the new user and sign the admin back in.
+    // 3. Sign out the new user and sign the admin back in.
     await signOut(auth);
     await signInWithEmailAndPassword(auth, adminEmail, adminPassword);
   
