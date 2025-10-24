@@ -7,19 +7,20 @@ import Dashboard from '@/components/data-sight/dashboard';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { UploadCloud, Loader2, X, Save, FileClock, LogIn, LogOut, Download, Settings } from 'lucide-react';
+import { UploadCloud, Loader2, X, Save, FileClock, LogOut, Download, Settings, User as UserIcon } from 'lucide-react';
 import packageJson from '../../package.json';
 import { ThemeToggle } from '@/components/theme-toggle';
 import DataSightLogo from '@/components/data-sight/logo';
 import { SidebarProvider, Sidebar, SidebarTrigger, SidebarContent, SidebarHeader, SidebarInset, SidebarFooter, SidebarMenu, SidebarMenuItem, SidebarMenuButton } from '@/components/ui/sidebar';
 import SavedReports from '@/components/data-sight/saved-reports';
 import { saveReport, getReports, type Report } from '@/lib/reports';
-import { useAuth, signInWithGoogle, signOutWithGoogle } from '@/hooks/use-auth';
+import { useAuth, signOutUser } from '@/hooks/use-auth';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 
 // Helper to convert parsed data back to a CSV string
@@ -48,6 +49,13 @@ export default function Home() {
   const { toast } = useToast();
   const { user, loading: authLoading } = useAuth();
   const dashboardRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.push('/login');
+    }
+  }, [authLoading, user, router]);
   
   const fetchReports = useCallback(async () => {
     if (!user) {
@@ -68,8 +76,10 @@ export default function Home() {
   }, [user]);
 
   useEffect(() => {
-    fetchReports();
-  }, [fetchReports]);
+    if (user) {
+      fetchReports();
+    }
+  }, [user, fetchReports]);
 
   const handleFileUpload = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -252,9 +262,11 @@ export default function Home() {
 
     if (!user) {
       return (
-        <Button variant="outline" onClick={signInWithGoogle}>
-          <LogIn className="mr-2 h-4 w-4" />
-          Login with Google
+        <Button variant="outline" asChild>
+          <Link href="/login">
+            <UserIcon className="mr-2 h-4 w-4" />
+            Login
+          </Link>
         </Button>
       );
     }
@@ -262,24 +274,26 @@ export default function Home() {
     return (
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+           <Button variant="ghost" className="relative h-8 w-8 rounded-full">
             <Avatar className="h-8 w-8">
               <AvatarImage src={user.photoURL ?? ''} alt={user.displayName ?? ''} />
-              <AvatarFallback>{user.displayName?.charAt(0)}</AvatarFallback>
+              <AvatarFallback>
+                {user.email?.charAt(0).toUpperCase()}
+              </AvatarFallback>
             </Avatar>
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent className="w-56" align="end" forceMount>
           <DropdownMenuLabel className="font-normal">
             <div className="flex flex-col space-y-1">
-              <p className="text-sm font-medium leading-none">{user.displayName}</p>
+              <p className="text-sm font-medium leading-none">{user.displayName || 'User'}</p>
               <p className="text-xs leading-none text-muted-foreground">
                 {user.email}
               </p>
             </div>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={signOutWithGoogle}>
+          <DropdownMenuItem onClick={signOutUser}>
             <LogOut className="mr-2 h-4 w-4" />
             <span>Log out</span>
           </DropdownMenuItem>
@@ -288,6 +302,14 @@ export default function Home() {
     );
   };
   
+  if (authLoading || !user) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+      </div>
+    );
+  }
+
   const isAdmin = user?.email === 'bahman.f.behtash@gmail.com';
 
   return (

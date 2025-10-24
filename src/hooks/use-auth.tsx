@@ -1,84 +1,37 @@
 'use client';
 import { useEffect, useState, useContext, createContext, ReactNode } from 'react';
-import { onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut, type User } from 'firebase/auth';
+import { 
+    onAuthStateChanged, 
+    signOut, 
+    type User,
+    createUserWithEmailAndPassword,
+    signInWithEmailAndPassword,
+    updateProfile,
+} from 'firebase/auth';
 import { auth, firestore } from '@/lib/firebase';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { errorEmitter } from '@/firebase/error-emitter';
+import type { SignUpData, SignInData } from '@/components/auth-form';
 
 interface AuthContextType {
     user: User | null;
     loading: boolean;
 }
 
-const defaultUser: User = {
-    uid: 'default-user-uid',
-    email: 'bahman.f.behtash@gmail.com',
-    displayName: 'Bahman Behtash',
-    photoURL: 'https://placehold.co/100x100/3b82f6/FFFFFF/png?text=BB',
-    providerId: 'default',
-    emailVerified: true,
-    isAnonymous: false,
-    metadata: {
-        creationTime: new Date().toUTCString(),
-        lastSignInTime: new Date().toUTCString(),
-    },
-    providerData: [],
-    // Add dummy implementations for methods to satisfy the type
-    delete: async () => {},
-    getIdToken: async () => 'mock-id-token',
-    getIdTokenResult: async () => ({
-        token: 'mock-id-token',
-        expirationTime: '',
-        authTime: '',
-        issuedAtTime: '',
-        signInProvider: null,
-        signInSecondFactor: null,
-        claims: {},
-    }),
-    reload: async () => {},
-    toJSON: () => ({}),
-};
-
-
 const AuthContext = createContext<AuthContextType>({ user: null, loading: true });
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-    const [user, setUser] = useState<User | null>(defaultUser);
-    const [loading, setLoading] = useState(false);
+    const [user, setUser] = useState<User | null>(null);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-            if (currentUser) {
-                // In a real scenario, you might prefer the real user over the mock user.
-                // For this mock setup, we can choose to either use the real user or stick with the mock.
-                // Let's stick with the real user if they log in.
-                setUser(currentUser);
-                const userRef = doc(firestore, 'users', currentUser.uid);
-                const userData = {
-                    uid: currentUser.uid,
-                    email: currentUser.email,
-                    displayName: currentUser.displayName,
-                    photoURL: currentUser.photoURL,
-                    lastLogin: serverTimestamp()
-                };
-
-                setDoc(userRef, userData, { merge: true }).catch(() => {
-                    const permissionError = new FirestorePermissionError({
-                        path: userRef.path,
-                        operation: 'update',
-                        requestResourceData: userData,
-                    });
-                    errorEmitter.emit('permission-error', permissionError);
-                });
-            } else {
-                 // If no real user, you could fall back to the mock user or null.
-                 // Setting to null for a more realistic logout behavior.
-                setUser(null);
-            }
+            setUser(currentUser);
             setLoading(false);
         });
 
+        // Cleanup subscription on unmount
         return () => unsubscribe();
     }, []);
 
@@ -99,19 +52,62 @@ export const useAuth = () => {
     return context;
 };
 
-export const signInWithGoogle = async () => {
-    const provider = new GoogleAuthProvider();
-    try {
-        await signInWithPopup(auth, provider);
-    } catch (error) {
-        console.error("Error signing in with Google: ", error);
-    }
-};
+export const signUpWithEmail = async ({ email, password, displayName }: SignUpData) => {
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    const { user } = userCredential;
 
-export const signOutWithGoogle = async () => {
+    // Update user profile with display name
+    await updateProfile(user, { displayName });
+
+    // Create user document in Firestore
+    const userRef = doc(firestore, 'users', user.uid);
+    const userData = {
+        uid: user.uid,
+        email: user.email,
+        displayName: displayName,
+        photoURL: null, // Default photoURL
+        lastLogin: serverTimestamp()
+    };
+    
+    // Set user document
+    await setDoc(userRef, userData, { merge: true }).catch((err) => {
+        const permissionError = new FirestorePermissionError({
+            path: userRef.path,
+            operation: 'create',
+            requestResourceData: userData,
+        });
+        errorEmitter.emit('permission-error', permissionError);
+        throw err;
+    });
+
+    return userCredential;
+}
+
+export const signInWithEmail = async ({ email, password }: SignInData) => {
+    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+    const user = userCredential.user;
+    
+    // Update last login timestamp
+    const userRef = doc(firestore, 'users', user.uid);
+    await setDoc(userRef, { lastLogin: serverTimestamp() }, { merge: true }).catch((err) => {
+        // This is a non-critical error, so we just emit it without failing the login
+        const permissionError = new FirestorePermissionError({
+            path: userRef.path,
+            operation: 'update',
+            requestResourceData: { lastLogin: 'serverTimestamp' },
+        });
+        errorEmitter.emit('permission-error', permissionError);
+    });
+    
+    return userCredential;
+}
+
+
+export const signOutUser = async () => {
     try {
         await signOut(auth);
     } catch (error) {
         console.error("Error signing out: ", error);
+        // Optionally, you can show a toast to the user here
     }
 };
