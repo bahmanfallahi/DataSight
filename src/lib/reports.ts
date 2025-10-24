@@ -3,7 +3,6 @@ import { firestore } from '@/lib/firebase';
 import { collection, addDoc, serverTimestamp, getDocs, query, orderBy, where } from 'firebase/firestore';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
-import type { User } from 'firebase/auth';
 
 export interface Report {
     id: string;
@@ -14,17 +13,19 @@ export interface Report {
 }
 
 export const saveReport = async (name: string, csvData: string, userId: string) => {
-    const reportsCollection = collection(firestore, 'users', userId, 'reports');
-    addDoc(reportsCollection, {
+    const reportsCollection = collection(firestore, 'datasight_data');
+    const reportData = {
         name,
         csvData,
         createdAt: serverTimestamp(),
         userId,
-    }).catch(async (serverError) => {
+    };
+
+    addDoc(reportsCollection, reportData).catch(async (serverError) => {
         const permissionError = new FirestorePermissionError({
             path: reportsCollection.path,
             operation: 'create',
-            requestResourceData: { name, csvData, userId },
+            requestResourceData: reportData,
         });
         errorEmitter.emit('permission-error', permissionError);
     });
@@ -33,8 +34,8 @@ export const saveReport = async (name: string, csvData: string, userId: string) 
 
 export const getReports = async (userId: string): Promise<Report[]> => {
     try {
-        const reportsCollection = collection(firestore, 'users', userId, 'reports');
-        const q = query(reportsCollection, orderBy('createdAt', 'desc'));
+        const reportsCollection = collection(firestore, 'datasight_data');
+        const q = query(reportsCollection, where("userId", "==", userId), orderBy('createdAt', 'desc'));
         const querySnapshot = await getDocs(q);
         const reports: Report[] = [];
         querySnapshot.forEach((doc) => {
@@ -50,7 +51,7 @@ export const getReports = async (userId: string): Promise<Report[]> => {
         return reports;
     } catch (e: any) {
         if (e.code === 'permission-denied') {
-            const reportsCollection = collection(firestore, 'users', userId, 'reports');
+            const reportsCollection = collection(firestore, 'datasight_data');
             const permissionError = new FirestorePermissionError({
                 path: reportsCollection.path,
                 operation: 'list',
