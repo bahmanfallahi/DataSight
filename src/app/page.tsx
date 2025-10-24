@@ -71,11 +71,11 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    // Only fetch reports if there's a user.
-    // The auth state change in AuthProvider will trigger this
-    // when the user logs in.
     if (user) {
       fetchReports();
+    } else {
+      setReports([]);
+      setIsLoadingReports(false);
     }
   }, [user, fetchReports]);
 
@@ -274,7 +274,7 @@ export default function Home() {
         <DropdownMenuTrigger asChild>
            <Button variant="ghost" className="relative h-8 w-8 rounded-full">
             <Avatar className="h-8 w-8">
-              <AvatarImage src={user.photoURL ?? ''} alt={userProfile.displayName ?? ''} />
+              <AvatarImage src={user.photoURL ?? userProfile.photoURL ?? ''} alt={userProfile.displayName ?? ''} />
               <AvatarFallback>
                 {userProfile.displayName?.charAt(0).toUpperCase() || user.email?.charAt(0).toUpperCase()}
               </AvatarFallback>
@@ -300,7 +300,7 @@ export default function Home() {
     );
   };
   
-  if (authLoading) {
+  if (authLoading && !user) {
     return (
       <div className="flex h-screen items-center justify-center">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />

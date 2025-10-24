@@ -49,7 +49,7 @@ export default function SavedReports({ reports, isLoading, onSelectReport, onDel
             });
             await onDeleteReport(); // Refresh the list in the parent component
         } catch (error) {
-             // Error is handled by the global error handler
+             // Error is handled by the global error handler which shows a toast
         } finally {
             setIsDeleting(null);
             setReportToDelete(null);

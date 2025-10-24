@@ -6,6 +6,8 @@ import {
     type User,
     signInWithEmailAndPassword,
     createUserWithEmailAndPassword,
+    reauthenticateWithCredential,
+    EmailAuthProvider,
 } from 'firebase/auth';
 import { auth, firestore } from '@/lib/firebase';
 import { doc, setDoc, serverTimestamp, getDoc } from 'firebase/firestore';
@@ -45,7 +47,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
             setLoading(true);
             if (currentUser) {
-                // Set user immediately to avoid UI flicker
                 setUser(currentUser);
                 try {
                     const userDocRef = doc(firestore, 'users', currentUser.uid);
@@ -54,23 +55,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                     if (userDoc.exists()) {
                         setUserProfile(userDoc.data() as UserProfile);
                     } else {
-                        // This case can happen if a user is created in Auth but their
-                        // profile document fails to be created in Firestore.
-                        // We default to 'expert' and log an error.
-                        console.warn(`No profile found for user ${currentUser.uid}, creating a default one.`);
-                        const profile: UserProfile = {
-                            uid: currentUser.uid,
-                            email: currentUser.email,
-                            displayName: currentUser.displayName || currentUser.email?.split('@')[0] || 'User',
-                            photoURL: currentUser.photoURL,
-                            role: 'expert' // Default to the least privileged role
-                        };
-                        await setDoc(userDocRef, { ...profile, createdAt: serverTimestamp() });
-                        setUserProfile(profile);
+                        console.warn(`No profile found for user ${currentUser.uid}. They may have been created in Auth but not Firestore.`);
+                        // If no profile, sign out to prevent inconsistent state
+                        await signOut(auth);
+                        setUser(null);
+                        setUserProfile(null);
                     }
                 } catch (error) {
                     console.error("Error fetching user profile:", error);
-                    // If fetching fails, sign the user out to prevent an inconsistent state
                     await signOut(auth);
                     setUser(null);
                     setUserProfile(null);
@@ -110,12 +102,13 @@ const createUserProfileDocument = async (user: User, additionalData: { displayNa
     if (!snapshot.exists()) {
         const { email, uid } = user;
         const { displayName, role } = additionalData;
+        const photoURL = `https://avatar.vercel.sh/${email}.png`;
         
         const profileData: UserProfile = {
             uid,
             email,
             displayName,
-            photoURL: user.photoURL,
+            photoURL,
             role,
         };
 
@@ -132,6 +125,11 @@ const createUserProfileDocument = async (user: User, additionalData: { displayNa
 }
 
 export const signUpWithEmail = async ({ newUser, adminEmail, adminPassword }: SignUpParams) => {
+    const originalUser = auth.currentUser;
+    if (!originalUser) {
+        throw new Error("Admin user is not authenticated.");
+    }
+
     // This is a temporary auth instance to create the user without signing out the admin
     const { user: newAuthUser } = await createUserWithEmailAndPassword(auth, newUser.email, newUser.password);
     
@@ -142,6 +140,7 @@ export const signUpWithEmail = async ({ newUser, adminEmail, adminPassword }: Si
   
     // Sign out the newly created user and sign the admin back in.
     await signOut(auth);
+    // Re-authenticate the original admin user
     await signInWithEmailAndPassword(auth, adminEmail, adminPassword);
   
     return newAuthUser;
@@ -153,10 +152,7 @@ export const signInWithEmail = async ({ email, password }: SignInData) => {
     const { user } = userCredential;
     
     const userRef = doc(firestore, 'users', user.uid);
-    // Update last login time. Profile is fetched by AuthProvider on state change.
     await setDoc(userRef, { lastLogin: serverTimestamp() }, { merge: true }).catch((err) => {
-        // This is not a critical error, so we just emit it for debugging
-        // without blocking the user's login flow.
         const permissionError = new FirestorePermissionError({
             path: userRef.path,
             operation: 'update',
