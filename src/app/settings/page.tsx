@@ -1,8 +1,8 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
-import { useAuth } from '@/hooks/use-auth';
+import { useAuth, type UserProfile } from '@/hooks/use-auth';
 import { useRouter } from 'next/navigation';
-import { getAllUsers, deleteUser, type UserProfile } from '@/lib/users';
+import { getAllUsers, deleteUser } from '@/lib/users';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -32,7 +32,7 @@ import {
 
 
 export default function SettingsPage() {
-  const { user, loading: authLoading } = useAuth();
+  const { user, userProfile, loading: authLoading } = useAuth();
   const router = useRouter();
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -41,7 +41,7 @@ export default function SettingsPage() {
   const [isAddUserOpen, setIsAddUserOpen] = useState(false);
   const { toast } = useToast();
 
-  const isAdmin = user?.email === 'bahman.f.behtash@gmail.com';
+  const isAdmin = userProfile?.role === 'admin';
 
   const fetchUsers = useCallback(async () => {
     setIsLoading(true);
@@ -68,14 +68,14 @@ export default function SettingsPage() {
         fetchUsers();
       }
     }
-  }, [user, authLoading, isAdmin, router, fetchUsers]);
+  }, [user, userProfile, authLoading, isAdmin, router, fetchUsers]);
 
   const handleDeleteClick = (user: UserProfile) => {
     if (user.email === 'bahman.f.behtash@gmail.com') {
       toast({
         variant: 'destructive',
         title: 'Action Not Allowed',
-        description: 'The admin user cannot be deleted.',
+        description: 'The primary admin user cannot be deleted.',
       });
       return;
     }
@@ -111,12 +111,20 @@ export default function SettingsPage() {
     fetchUsers();
   }
 
-  if (authLoading || isLoading) {
+  if (authLoading || !userProfile || isLoading) {
     return (
       <div className="flex h-screen items-center justify-center">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
       </div>
     );
+  }
+  
+  if (!isAdmin) {
+    return (
+       <div className="flex h-screen items-center justify-center">
+        <p>You do not have permission to view this page.</p>
+      </div>
+    )
   }
 
   return (
@@ -180,7 +188,7 @@ export default function SettingsPage() {
                           <AvatarFallback>{u.displayName?.charAt(0) ?? u.email?.charAt(0)}</AvatarFallback>
                         </Avatar>
                         <div className="font-medium">{u.displayName}</div>
-                        {u.email === 'bahman.f.behtash@gmail.com' && (
+                        {u.role === 'admin' && (
                           <ShieldCheck className="h-5 w-5 text-primary" />
                         )}
                       </div>
