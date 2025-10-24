@@ -278,7 +278,7 @@ export default function Home() {
             <Avatar className="h-8 w-8">
               <AvatarImage src={user.photoURL ?? ''} alt={user.displayName ?? ''} />
               <AvatarFallback>
-                {user.email?.charAt(0).toUpperCase()}
+                {user.displayName?.charAt(0).toUpperCase() || user.email?.charAt(0).toUpperCase()}
               </AvatarFallback>
             </Avatar>
           </Button>
