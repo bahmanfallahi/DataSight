@@ -1,15 +1,14 @@
 'use client';
 import { firestore } from '@/lib/firebase';
-import { collection, getDocs, doc, deleteDoc } from 'firebase/firestore';
+import { collection, getDocs, doc, deleteDoc, setDoc } from 'firebase/firestore';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
+import type { UserProfile as AuthUserProfile } from '@/hooks/use-auth';
 
-export interface UserProfile {
-    uid: string;
-    email: string;
-    displayName: string | null;
-    photoURL: string | null;
+export interface UserProfile extends AuthUserProfile {
+    role: 'admin' | 'expert';
 }
+
 
 export async function getAllUsers(): Promise<UserProfile[]> {
     const usersCollection = collection(firestore, 'users');
@@ -23,6 +22,7 @@ export async function getAllUsers(): Promise<UserProfile[]> {
                 email: data.email,
                 displayName: data.displayName || null,
                 photoURL: data.photoURL || null,
+                role: data.role || 'expert',
             });
         });
         return users;

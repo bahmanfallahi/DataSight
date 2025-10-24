@@ -14,7 +14,7 @@ import DataSightLogo from '@/components/data-sight/logo';
 import { SidebarProvider, Sidebar, SidebarTrigger, SidebarContent, SidebarHeader, SidebarInset, SidebarFooter, SidebarMenu, SidebarMenuItem, SidebarMenuButton } from '@/components/ui/sidebar';
 import SavedReports from '@/components/data-sight/saved-reports';
 import { saveReport, getReports, type Report } from '@/lib/reports';
-import { useAuth, signOutUser } from '@/hooks/use-auth';
+import { useAuth, signOutUser, type UserProfile } from '@/hooks/use-auth';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import html2canvas from 'html2canvas';
@@ -47,7 +47,7 @@ export default function Home() {
   const [reports, setReports] = useState<Report[]>([]);
   const [isLoadingReports, setIsLoadingReports] = useState(true);
   const { toast } = useToast();
-  const { user, loading: authLoading } = useAuth();
+  const { user, userProfile, loading: authLoading } = useAuth();
   const dashboardRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
 
@@ -66,7 +66,7 @@ export default function Home() {
 
     setIsLoadingReports(true);
     try {
-        const fetchedReports = await getReports(user.uid);
+        const fetchedReports = await getReports();
         setReports(fetchedReports);
     } catch (error) {
         console.error(error);
@@ -276,9 +276,9 @@ export default function Home() {
         <DropdownMenuTrigger asChild>
            <Button variant="ghost" className="relative h-8 w-8 rounded-full">
             <Avatar className="h-8 w-8">
-              <AvatarImage src={user.photoURL ?? ''} alt={user.displayName ?? ''} />
+              <AvatarImage src={user.photoURL ?? ''} alt={userProfile?.displayName ?? ''} />
               <AvatarFallback>
-                {user.displayName?.charAt(0).toUpperCase() || user.email?.charAt(0).toUpperCase()}
+                {userProfile?.displayName?.charAt(0).toUpperCase() || user.email?.charAt(0).toUpperCase()}
               </AvatarFallback>
             </Avatar>
           </Button>
@@ -286,7 +286,7 @@ export default function Home() {
         <DropdownMenuContent className="w-56" align="end" forceMount>
           <DropdownMenuLabel className="font-normal">
             <div className="flex flex-col space-y-1">
-              <p className="text-sm font-medium leading-none">{user.displayName || 'User'}</p>
+              <p className="text-sm font-medium leading-none">{userProfile?.displayName || 'User'}</p>
               <p className="text-xs leading-none text-muted-foreground">
                 {user.email}
               </p>
@@ -310,7 +310,7 @@ export default function Home() {
     );
   }
 
-  const isAdmin = user?.email === 'bahman.f.behtash@gmail.com';
+  const isAdmin = userProfile?.role === 'admin';
 
   return (
     <SidebarProvider>
@@ -327,6 +327,7 @@ export default function Home() {
                 isLoading={isLoadingReports}
                 onSelectReport={loadSavedReport}
                 onDeleteReport={fetchReports}
+                userProfile={userProfile}
              />
           </SidebarContent>
           {isAdmin && (

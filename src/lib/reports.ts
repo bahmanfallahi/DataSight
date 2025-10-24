@@ -1,6 +1,6 @@
 'use client';
 import { firestore } from '@/lib/firebase';
-import { collection, addDoc, serverTimestamp, getDocs, query, where, doc, deleteDoc } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, getDocs, query, where, doc, deleteDoc, orderBy } from 'firebase/firestore';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 
@@ -33,10 +33,10 @@ export const saveReport = async (name: string, csvData: string, userId: string) 
 };
 
 
-export const getReports = async (userId: string): Promise<Report[]> => {
+export const getReports = async (): Promise<Report[]> => {
     try {
         const reportsCollection = collection(firestore, 'datasight_data');
-        const q = query(reportsCollection, where("userId", "==", userId));
+        const q = query(reportsCollection, orderBy("createdAt", "desc"));
         const querySnapshot = await getDocs(q);
         const reports: Report[] = [];
         querySnapshot.forEach((doc) => {
@@ -50,9 +50,6 @@ export const getReports = async (userId: string): Promise<Report[]> => {
                 userId: data.userId,
             });
         });
-        
-        // Sort reports by date descending in the client-side code
-        reports.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
         
         return reports;
     } catch (e: any) {

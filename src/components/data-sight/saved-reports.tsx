@@ -6,7 +6,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { FileText, Trash2, Loader2 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useAuth } from '@/hooks/use-auth';
+import { useAuth, type UserProfile } from '@/hooks/use-auth';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -23,13 +23,16 @@ interface SavedReportsProps {
     isLoading: boolean;
     onSelectReport: (csvData: string, name: string) => void;
     onDeleteReport: () => Promise<void>;
+    userProfile: UserProfile | null;
 }
 
-export default function SavedReports({ reports, isLoading, onSelectReport, onDeleteReport }: SavedReportsProps) {
+export default function SavedReports({ reports, isLoading, onSelectReport, onDeleteReport, userProfile }: SavedReportsProps) {
     const [isDeleting, setIsDeleting] = useState<string | null>(null);
     const [reportToDelete, setReportToDelete] = useState<Report | null>(null);
     const { toast } = useToast();
     const { user } = useAuth();
+
+    const isAdmin = userProfile?.role === 'admin';
     
     const handleDeleteClick = (report: Report) => {
         setReportToDelete(report);
@@ -89,20 +92,21 @@ export default function SavedReports({ reports, isLoading, onSelectReport, onDel
                                     </span>
                                 </div>
                             </Button>
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8 shrink-0 text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
-                                onClick={() => handleDeleteClick(report)}
-                                disabled={!!isDeleting}
-                            >
-                                {isDeleting === report.id ? (
-                                    <Loader2 className="h-4 w-4 animate-spin" />
-                                ) : (
-                                    <Trash2 className="h-4 w-4" />
-                                )}
-                                
-                            </Button>
+                            {isAdmin && (
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8 shrink-0 text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
+                                    onClick={() => handleDeleteClick(report)}
+                                    disabled={!!isDeleting}
+                                >
+                                    {isDeleting === report.id ? (
+                                        <Loader2 className="h-4 w-4 animate-spin" />
+                                    ) : (
+                                        <Trash2 className="h-4 w-4" />
+                                    )}
+                                </Button>
+                            )}
                         </div>
                        
                     ))

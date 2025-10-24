@@ -6,8 +6,6 @@ import {
     type User,
     signInWithEmailAndPassword,
     createUserWithEmailAndPassword,
-    reauthenticateWithCredential,
-    EmailAuthProvider,
 } from 'firebase/auth';
 import { auth, firestore } from '@/lib/firebase';
 import { doc, setDoc, serverTimestamp, getDoc } from 'firebase/firestore';
@@ -16,8 +14,17 @@ import { errorEmitter } from '@/firebase/error-emitter';
 import type { SignInData } from '@/components/auth-form';
 import type { AddUserData } from '@/components/add-user-form';
 
+export interface UserProfile {
+    uid: string;
+    email: string | null;
+    displayName: string | null;
+    photoURL: string | null;
+    role?: 'admin' | 'expert';
+}
+
 interface AuthContextType {
     user: User | null;
+    userProfile: UserProfile | null;
     loading: boolean;
 }
 
@@ -27,15 +34,24 @@ interface SignUpParams {
     adminPassword: string;
 }
 
-const AuthContext = createContext<AuthContextType>({ user: null, loading: true });
+const AuthContext = createContext<AuthContextType>({ user: null, userProfile: null, loading: true });
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const [user, setUser] = useState<User | null>(null);
+    const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
             setUser(currentUser);
+            if (currentUser) {
+                const userDoc = await getDoc(doc(firestore, 'users', currentUser.uid));
+                if (userDoc.exists()) {
+                    setUserProfile(userDoc.data() as UserProfile);
+                }
+            } else {
+                setUserProfile(null);
+            }
             setLoading(false);
         });
 
@@ -43,7 +59,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         return () => unsubscribe();
     }, []);
 
-    const value = { user, loading };
+    const value = { user, userProfile, loading };
 
     return (
         <AuthContext.Provider value={value}>
@@ -60,24 +76,23 @@ export const useAuth = () => {
     return context;
 };
 
-const createUserProfileDocument = async (user: User, additionalData?: { displayName?: string }) => {
+const createUserProfileDocument = async (user: User, additionalData: { displayName: string, role: 'admin' | 'expert' }) => {
     const userRef = doc(firestore, 'users', user.uid);
     const snapshot = await getDoc(userRef);
 
     if (!snapshot.exists()) {
         const { email, uid } = user;
-        const displayName = additionalData?.displayName || user.displayName || email?.split('@')[0];
+        const { displayName, role } = additionalData;
         
-        const profileData = {
+        const profileData: UserProfile = {
             uid,
             email,
             displayName,
             photoURL: user.photoURL,
-            createdAt: serverTimestamp(),
-            lastLogin: serverTimestamp(),
+            role,
         };
 
-        return setDoc(userRef, profileData).catch((err) => {
+        return setDoc(userRef, { ...profileData, createdAt: serverTimestamp() }).catch((err) => {
             const permissionError = new FirestorePermissionError({
                 path: userRef.path,
                 operation: 'create',
@@ -86,9 +101,37 @@ const createUserProfileDocument = async (user: User, additionalData?: { displayN
             errorEmitter.emit('permission-error', permissionError);
             throw err;
         });
+    }
+}
+
+export const signUpWithEmail = async ({ newUser, adminEmail, adminPassword }: SignUpParams) => {
+    const { user: newAuthUser } = await createUserWithEmailAndPassword(auth, newUser.email, newUser.password);
+    
+    await createUserProfileDocument(newAuthUser, {
+      displayName: newUser.displayName,
+      role: newUser.role,
+    });
+  
+    // Sign out the new user and sign the admin back in.
+    await signOut(auth);
+    await signInWithEmailAndPassword(auth, adminEmail, adminPassword);
+  
+    return newAuthUser;
+};
+
+
+export const signInWithEmail = async ({ email, password }: SignInData) => {
+    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+    const { user } = userCredential;
+    
+    const userRef = doc(firestore, 'users', user.uid);
+    const userDoc = await getDoc(userRef);
+    
+    if (!userDoc.exists()) {
+        // This is a fallback for users created manually in Auth but without a profile
+        await createUserProfileDocument(user, { displayName: user.email!.split('@')[0], role: 'expert' });
     } else {
-        // Update last login timestamp
-        return setDoc(userRef, { lastLogin: serverTimestamp() }, { merge: true }).catch((err) => {
+        await setDoc(userRef, { lastLogin: serverTimestamp() }, { merge: true }).catch((err) => {
             const permissionError = new FirestorePermissionError({
                 path: userRef.path,
                 operation: 'update',
@@ -97,38 +140,6 @@ const createUserProfileDocument = async (user: User, additionalData?: { displayN
             errorEmitter.emit('permission-error', permissionError);
         });
     }
-}
-
-export const signUpWithEmail = async ({ newUser, adminEmail, adminPassword }: SignUpParams) => {
-    // 1. Create the new user. This will unfortunately sign the admin out and sign in as the new user.
-    const { user: newAuthUser } = await createUserWithEmailAndPassword(auth, newUser.email, newUser.password);
-
-    // 2. Create the Firestore document for the new user.
-    await createUserProfileDocument(newAuthUser, { displayName: newUser.displayName });
-
-    // 3. Sign the new user out to restore the admin's session.
-    await signOut(auth);
-
-    // 4. Sign the admin back in.
-    await signInWithEmailAndPassword(auth, adminEmail, adminPassword);
-
-    return newAuthUser;
-};
-
-
-export const signInWithEmail = async ({ email, password }: SignInData) => {
-    const userCredential = await signInWithEmailAndPassword(auth, email, password);
-    const { user } = userCredential;
-    // We only update the last login time, profile is created on sign up.
-    const userRef = doc(firestore, 'users', user.uid);
-    setDoc(userRef, { lastLogin: serverTimestamp() }, { merge: true }).catch((err) => {
-        const permissionError = new FirestorePermissionError({
-            path: userRef.path,
-            operation: 'update',
-            requestResourceData: { lastLogin: 'serverTimestamp' },
-        });
-        errorEmitter.emit('permission-error', permissionError);
-    });
 
     return userCredential;
 }
@@ -139,6 +150,5 @@ export const signOutUser = async () => {
         await signOut(auth);
     } catch (error) {
         console.error("Error signing out: ", error);
-        // Optionally, you can show a toast to the user here
     }
 };
