@@ -1,6 +1,6 @@
 'use client';
 import { firestore } from '@/lib/firebase';
-import { collection, addDoc, serverTimestamp, getDocs, query, where } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, getDocs, query, where, doc, deleteDoc } from 'firebase/firestore';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 
@@ -28,6 +28,7 @@ export const saveReport = async (name: string, csvData: string, userId: string) 
             requestResourceData: reportData,
         });
         errorEmitter.emit('permission-error', permissionError);
+        throw serverError; // Re-throw to allow component to handle saving state
     });
 };
 
@@ -66,4 +67,17 @@ export const getReports = async (userId: string): Promise<Report[]> => {
         console.error("Error getting documents: ", e);
         throw new Error("Could not fetch reports from Firestore.");
     }
+};
+
+export const deleteReport = async (reportId: string): Promise<void> => {
+    const reportRef = doc(firestore, 'datasight_data', reportId);
+    
+    return deleteDoc(reportRef).catch(async (serverError) => {
+        const permissionError = new FirestorePermissionError({
+            path: reportRef.path,
+            operation: 'delete',
+        });
+        errorEmitter.emit('permission-error', permissionError);
+        throw serverError; // Re-throw to be caught by the component
+    });
 };

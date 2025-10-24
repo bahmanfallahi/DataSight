@@ -1,12 +1,22 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { getReports, type Report } from '@/lib/reports';
+import { getReports, deleteReport, type Report } from '@/lib/reports';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
-import { FileText } from 'lucide-react';
+import { FileText, Trash2, Loader2 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/hooks/use-auth';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 
 interface SavedReportsProps {
     onSelectReport: (csvData: string, name: string) => void;
@@ -15,6 +25,8 @@ interface SavedReportsProps {
 export default function SavedReports({ onSelectReport }: SavedReportsProps) {
     const [reports, setReports] = useState<Report[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [isDeleting, setIsDeleting] = useState<string | null>(null);
+    const [reportToDelete, setReportToDelete] = useState<Report | null>(null);
     const { toast } = useToast();
     const { user } = useAuth();
 
@@ -41,6 +53,30 @@ export default function SavedReports({ onSelectReport }: SavedReportsProps) {
 
         fetchReports();
     }, [user, toast]);
+    
+    const handleDeleteClick = (report: Report) => {
+        setReportToDelete(report);
+    };
+
+    const handleConfirmDelete = async () => {
+        if (!reportToDelete) return;
+
+        setIsDeleting(reportToDelete.id);
+        try {
+            await deleteReport(reportToDelete.id);
+            setReports(prevReports => prevReports.filter(r => r.id !== reportToDelete.id));
+            toast({
+                title: "Report Deleted",
+                description: `"${reportToDelete.name}" has been deleted.`,
+            });
+        } catch (error) {
+             // Error is handled by the global error handler
+        } finally {
+            setIsDeleting(null);
+            setReportToDelete(null);
+        }
+    };
+
 
     if (!user) {
         return <p className="p-4 text-sm text-center text-muted-foreground">Please log in to see your reports.</p>
@@ -57,27 +93,65 @@ export default function SavedReports({ onSelectReport }: SavedReportsProps) {
     }
 
     return (
-        <div className="flex flex-col gap-1">
-            {reports.length === 0 ? (
-                <p className="p-4 text-sm text-center text-muted-foreground">No saved reports yet.</p>
-            ) : (
-                reports.map((report) => (
-                    <Button
-                        key={report.id}
-                        variant="ghost"
-                        className="justify-start gap-2 h-auto"
-                        onClick={() => onSelectReport(report.csvData, report.name)}
-                    >
-                        <FileText className="h-4 w-4" />
-                        <div className="flex flex-col items-start">
-                            <span className="font-medium text-sm">{report.name}</span>
-                            <span className="text-xs text-muted-foreground">
-                                {new Date(report.createdAt).toLocaleDateString()}
-                            </span>
+        <>
+            <div className="flex flex-col gap-1">
+                {reports.length === 0 ? (
+                    <p className="p-4 text-sm text-center text-muted-foreground">No saved reports yet.</p>
+                ) : (
+                    reports.map((report) => (
+                        <div key={report.id} className="group flex items-center justify-between gap-1 w-full rounded-md hover:bg-accent">
+                             <Button
+                                variant="ghost"
+                                className="flex-1 justify-start gap-2 h-auto text-left"
+                                onClick={() => onSelectReport(report.csvData, report.name)}
+                            >
+                                <FileText className="h-4 w-4" />
+                                <div className="flex flex-col items-start overflow-hidden">
+                                    <span className="font-medium text-sm truncate">{report.name}</span>
+                                    <span className="text-xs text-muted-foreground">
+                                        {new Date(report.createdAt).toLocaleDateString()}
+                                    </span>
+                                </div>
+                            </Button>
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 shrink-0 text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
+                                onClick={() => handleDeleteClick(report)}
+                                disabled={!!isDeleting}
+                            >
+                                {isDeleting === report.id ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : (
+                                    <Trash2 className="h-4 w-4" />
+                                )}
+                                
+                            </Button>
                         </div>
-                    </Button>
-                ))
-            )}
-        </div>
+                       
+                    ))
+                )}
+            </div>
+
+            <AlertDialog open={!!reportToDelete} onOpenChange={(open) => !open && setReportToDelete(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        This will permanently delete the report "{reportToDelete?.name}". This action cannot be undone.
+                    </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                        onClick={handleConfirmDelete}
+                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    >
+                        Delete
+                    </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+        </>
     );
 }
