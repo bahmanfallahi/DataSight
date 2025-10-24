@@ -1,13 +1,13 @@
 'use client';
 
-import { useState, ChangeEvent, useCallback } from 'react';
+import { useState, ChangeEvent, useCallback, useRef } from 'react';
 import type { ParsedData, ColumnAnalysis } from '@/lib/data-utils';
 import { parseDataFile, analyzeColumns } from '@/lib/data-utils';
 import Dashboard from '@/components/data-sight/dashboard';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { UploadCloud, Loader2, X, Save, FileClock, LogIn, LogOut, Database } from 'lucide-react';
+import { UploadCloud, Loader2, X, Save, FileClock, LogIn, LogOut, Download } from 'lucide-react';
 import packageJson from '../../package.json';
 import { ThemeToggle } from '@/components/theme-toggle';
 import DataSightLogo from '@/components/data-sight/logo';
@@ -17,10 +17,8 @@ import { saveReport } from '@/lib/reports';
 import { useAuth, signInWithGoogle, signOutWithGoogle } from '@/hooks/use-auth';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { firestore } from '@/lib/firebase';
-import { doc, getDoc } from 'firebase/firestore';
-import { FirestorePermissionError } from '@/firebase/errors';
-import { errorEmitter } from '@/firebase/error-emitter';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 
 
 // Helper to convert parsed data back to a CSV string
@@ -44,9 +42,9 @@ export default function Home() {
   const [fileName, setFileName] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isSaving, setIsSaving] = useState<boolean>(false);
-  const [isTesting, setIsTesting] = useState<boolean>(false);
   const { toast } = useToast();
   const { user, loading: authLoading } = useAuth();
+  const dashboardRef = useRef<HTMLDivElement>(null);
 
   const handleFileUpload = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -162,23 +160,43 @@ export default function Home() {
     }
   }, [toast]);
   
-  const handleTestConnection = async () => {
-    setIsTesting(true);
+  const handleDownloadDashboard = async () => {
+    if (!dashboardRef.current) return;
+    setIsLoading(true);
+
     try {
-        const testDocRef = doc(firestore, 'test', 'test');
-        await getDoc(testDocRef);
-        toast({
-            title: 'Connection Successful',
-            description: 'Successfully connected to the database.',
-        });
+      const canvas = await html2canvas(dashboardRef.current, {
+        allowTaint: true,
+        useCORS: true,
+        scale: 1.5,
+      });
+      const imgData = canvas.toDataURL('image/jpeg', 0.95);
+      
+      const pdf = new jsPDF({
+        orientation: 'p',
+        unit: 'px',
+        format: [canvas.width, canvas.height],
+      });
+      
+      pdf.addImage(imgData, 'JPEG', 0, 0, canvas.width, canvas.height);
+      
+      const pdfFileName = fileName.substring(0, fileName.lastIndexOf('.')) || fileName;
+      pdf.save(`${pdfFileName}-dashboard.pdf`);
+
+      toast({
+        title: "Download Started",
+        description: `Your dashboard PDF is being downloaded.`,
+      });
+
     } catch (error) {
-       const permissionError = new FirestorePermissionError({
-            path: 'test/test',
-            operation: 'get',
-        });
-        errorEmitter.emit('permission-error', permissionError);
+      console.error('Error downloading dashboard:', error);
+      toast({
+        variant: 'destructive',
+        title: "Download Failed",
+        description: "Could not generate a PDF of the dashboard.",
+      });
     } finally {
-        setIsTesting(false);
+        setIsLoading(false);
     }
   };
 
@@ -198,10 +216,6 @@ export default function Home() {
           disabled={isLoading}
         />
       </div>
-       <Button onClick={handleTestConnection} disabled={isTesting} className="mt-4">
-        {isTesting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Database className="mr-2 h-4 w-4" />}
-        Test Database Connection
-      </Button>
     </div>
   );
 
@@ -271,19 +285,23 @@ export default function Home() {
                 <h1 className="text-2xl font-bold tracking-tight">DataSight</h1>
               </div>
               <div className="flex items-center gap-4">
-                {parsedData && user && (
+                {parsedData && (
                   <>
-                    <Button variant="outline" size="sm" onClick={handleSaveData} disabled={isSaving}>
-                      {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                      Save Report
+                     <Button variant="outline" size="sm" onClick={handleDownloadDashboard} disabled={isLoading}>
+                      <Download className="mr-2 h-4 w-4" />
+                      Download PDF
                     </Button>
-                  </>
-                )}
-                 {parsedData && (
+                    {user && (
+                      <Button variant="outline" size="sm" onClick={handleSaveData} disabled={isSaving}>
+                        {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                        Save Report
+                      </Button>
+                    )}
                     <Button variant="ghost" size="sm" onClick={handleReset}>
                       <X className="mr-2 h-4 w-4" />
                       Clear Data
                     </Button>
+                  </>
                 )}
                 <ThemeToggle />
                 <UserProfile />
@@ -318,6 +336,7 @@ export default function Home() {
 
               {parsedData && columnAnalysis && !isLoading && (
                 <Dashboard
+                  ref={dashboardRef}
                   parsedData={parsedData}
                   columnAnalysis={columnAnalysis}
                   fileName={fileName}

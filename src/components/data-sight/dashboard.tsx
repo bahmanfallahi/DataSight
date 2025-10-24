@@ -4,7 +4,7 @@ import ColumnProfiler from '@/components/data-sight/column-profiler';
 import SummaryCards from '@/components/data-sight/summary-cards';
 import Visualizer from '@/components/data-sight/visualizer';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { File as FileIcon, CalendarClock, Download } from 'lucide-react';
+import { File as FileIcon, CalendarClock } from 'lucide-react';
 import AgentSalesTable from './agent-sales-table';
 import DateBasedSalesStats from './date-based-sales-stats';
 import SalesOverTimeChart from './sales-over-time-chart';
@@ -13,7 +13,7 @@ import OntSalesPieChart from './ont-sales-pie-chart';
 import AreaSalesPieChart from './area-sales-pie-chart';
 import AreaSalesTable from './area-sales-table';
 import ChannelTreemap from './channel-treemap';
-import { useRef } from 'react';
+import { useRef, forwardRef } from 'react';
 import ChartDownloader from './chart-downloader';
 
 interface DashboardProps {
@@ -22,14 +22,14 @@ interface DashboardProps {
   fileName: string;
 }
 
-export default function Dashboard({
+const Dashboard = forwardRef<HTMLDivElement, DashboardProps>(({
   parsedData,
   columnAnalysis,
   fileName,
-}: DashboardProps) {
+}, ref) => {
   const dateStatsRef = useRef<HTMLDivElement>(null);
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" ref={ref}>
       <div className="space-y-2">
           <div className="flex items-center gap-2">
             <FileIcon className="h-5 w-5 text-muted-foreground" />
@@ -79,4 +79,8 @@ export default function Dashboard({
       </div>
     </div>
   );
-}
+});
+
+Dashboard.displayName = "Dashboard";
+
+export default Dashboard;
