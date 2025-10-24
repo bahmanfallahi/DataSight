@@ -4,15 +4,13 @@ import {
     onAuthStateChanged, 
     signOut, 
     type User,
-    createUserWithEmailAndPassword,
     signInWithEmailAndPassword,
-    updateProfile,
 } from 'firebase/auth';
 import { auth, firestore } from '@/lib/firebase';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { errorEmitter } from '@/firebase/error-emitter';
-import type { SignUpData, SignInData } from '@/components/auth-form';
+import type { SignInData } from '@/components/auth-form';
 
 interface AuthContextType {
     user: User | null;
@@ -51,37 +49,6 @@ export const useAuth = () => {
     }
     return context;
 };
-
-export const signUpWithEmail = async ({ email, password, displayName }: SignUpData) => {
-    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-    const { user } = userCredential;
-
-    // Update user profile with display name
-    await updateProfile(user, { displayName });
-
-    // Create user document in Firestore
-    const userRef = doc(firestore, 'users', user.uid);
-    const userData = {
-        uid: user.uid,
-        email: user.email,
-        displayName: displayName,
-        photoURL: null, // Default photoURL
-        lastLogin: serverTimestamp()
-    };
-    
-    // Set user document
-    await setDoc(userRef, userData, { merge: true }).catch((err) => {
-        const permissionError = new FirestorePermissionError({
-            path: userRef.path,
-            operation: 'create',
-            requestResourceData: userData,
-        });
-        errorEmitter.emit('permission-error', permissionError);
-        throw err;
-    });
-
-    return userCredential;
-}
 
 export const signInWithEmail = async ({ email, password }: SignInData) => {
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
