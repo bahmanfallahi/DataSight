@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { getReports, deleteReport, type Report } from '@/lib/reports';
+import { useState } from 'react';
+import { deleteReport, type Report } from '@/lib/reports';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { FileText, Trash2, Loader2 } from 'lucide-react';
@@ -19,40 +19,17 @@ import {
 } from "@/components/ui/alert-dialog"
 
 interface SavedReportsProps {
+    reports: Report[];
+    isLoading: boolean;
     onSelectReport: (csvData: string, name: string) => void;
+    onDeleteReport: () => Promise<void>;
 }
 
-export default function SavedReports({ onSelectReport }: SavedReportsProps) {
-    const [reports, setReports] = useState<Report[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
+export default function SavedReports({ reports, isLoading, onSelectReport, onDeleteReport }: SavedReportsProps) {
     const [isDeleting, setIsDeleting] = useState<string | null>(null);
     const [reportToDelete, setReportToDelete] = useState<Report | null>(null);
     const { toast } = useToast();
     const { user } = useAuth();
-
-    useEffect(() => {
-        if (!user) {
-            setReports([]);
-            setIsLoading(false);
-            return;
-        };
-
-        const fetchReports = async () => {
-            setIsLoading(true);
-            try {
-                const fetchedReports = await getReports(user.uid);
-                setReports(fetchedReports);
-            } catch (error) {
-                console.error(error);
-                // The error is already handled by the permission error emitter,
-                // so we don't need a toast here.
-            } finally {
-                setIsLoading(false);
-            }
-        };
-
-        fetchReports();
-    }, [user, toast]);
     
     const handleDeleteClick = (report: Report) => {
         setReportToDelete(report);
@@ -64,11 +41,11 @@ export default function SavedReports({ onSelectReport }: SavedReportsProps) {
         setIsDeleting(reportToDelete.id);
         try {
             await deleteReport(reportToDelete.id);
-            setReports(prevReports => prevReports.filter(r => r.id !== reportToDelete.id));
             toast({
                 title: "Report Deleted",
                 description: `"${reportToDelete.name}" has been deleted.`,
             });
+            await onDeleteReport(); // Refresh the list in the parent component
         } catch (error) {
              // Error is handled by the global error handler
         } finally {
@@ -76,7 +53,6 @@ export default function SavedReports({ onSelectReport }: SavedReportsProps) {
             setReportToDelete(null);
         }
     };
-
 
     if (!user) {
         return <p className="p-4 text-sm text-center text-muted-foreground">Please log in to see your reports.</p>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, ChangeEvent, useCallback, useRef } from 'react';
+import { useState, ChangeEvent, useCallback, useRef, useEffect } from 'react';
 import type { ParsedData, ColumnAnalysis } from '@/lib/data-utils';
 import { parseDataFile, analyzeColumns } from '@/lib/data-utils';
 import Dashboard from '@/components/data-sight/dashboard';
@@ -13,7 +13,7 @@ import { ThemeToggle } from '@/components/theme-toggle';
 import DataSightLogo from '@/components/data-sight/logo';
 import { SidebarProvider, Sidebar, SidebarTrigger, SidebarContent, SidebarHeader, SidebarInset } from '@/components/ui/sidebar';
 import SavedReports from '@/components/data-sight/saved-reports';
-import { saveReport } from '@/lib/reports';
+import { saveReport, getReports, type Report } from '@/lib/reports';
 import { useAuth, signInWithGoogle, signOutWithGoogle } from '@/hooks/use-auth';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -42,9 +42,33 @@ export default function Home() {
   const [fileName, setFileName] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isSaving, setIsSaving] = useState<boolean>(false);
+  const [reports, setReports] = useState<Report[]>([]);
+  const [isLoadingReports, setIsLoadingReports] = useState(true);
   const { toast } = useToast();
   const { user, loading: authLoading } = useAuth();
   const dashboardRef = useRef<HTMLDivElement>(null);
+  
+  const fetchReports = useCallback(async () => {
+    if (!user) {
+        setReports([]);
+        setIsLoadingReports(false);
+        return;
+    };
+
+    setIsLoadingReports(true);
+    try {
+        const fetchedReports = await getReports(user.uid);
+        setReports(fetchedReports);
+    } catch (error) {
+        console.error(error);
+    } finally {
+        setIsLoadingReports(false);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    fetchReports();
+  }, [fetchReports]);
 
   const handleFileUpload = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -124,6 +148,7 @@ export default function Home() {
             title: 'Report Saved',
             description: `${fileName} has been saved successfully.`,
         });
+        await fetchReports(); // Refresh the list
     } catch (error) {
         // Error is handled by the global error handler
     } finally {
@@ -191,7 +216,7 @@ export default function Home() {
     } catch (error) {
       console.error('Error downloading dashboard:', error);
       toast({
-        variant: 'destructive',
+        variant: "destructive",
         title: "Download Failed",
         description: "Could not generate a PDF of the dashboard.",
       });
@@ -272,7 +297,12 @@ export default function Home() {
               </div>
           </SidebarHeader>
           <SidebarContent>
-             <SavedReports onSelectReport={loadSavedReport} />
+             <SavedReports 
+                reports={reports}
+                isLoading={isLoadingReports}
+                onSelectReport={loadSavedReport}
+                onDeleteReport={fetchReports}
+             />
           </SidebarContent>
       </Sidebar>
       <SidebarInset>
@@ -360,3 +390,5 @@ export default function Home() {
     </SidebarProvider>
   );
 }
+
+    
