@@ -1,13 +1,16 @@
 'use client';
-import { useState, useContext, createContext, ReactNode } from 'react';
-import type { User } from 'firebase/auth';
+import { useEffect, useState, useContext, createContext, ReactNode } from 'react';
+import { onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut, type User } from 'firebase/auth';
+import { auth, firestore } from '@/lib/firebase';
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { FirestorePermissionError } from '@/firebase/errors';
+import { errorEmitter } from '@/firebase/error-emitter';
 
 interface AuthContextType {
     user: User | null;
     loading: boolean;
 }
 
-// Create a mock user object
 const defaultUser: User = {
     uid: 'default-user-uid',
     email: 'bahman.f.behtash@gmail.com',
@@ -41,9 +44,43 @@ const defaultUser: User = {
 const AuthContext = createContext<AuthContextType>({ user: null, loading: true });
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-    // Set the default user and finish loading immediately.
-    const [user] = useState<User | null>(defaultUser);
-    const [loading] = useState(false);
+    const [user, setUser] = useState<User | null>(defaultUser);
+    const [loading, setLoading] = useState(false);
+
+    useEffect(() => {
+        const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+            if (currentUser) {
+                // In a real scenario, you might prefer the real user over the mock user.
+                // For this mock setup, we can choose to either use the real user or stick with the mock.
+                // Let's stick with the real user if they log in.
+                setUser(currentUser);
+                const userRef = doc(firestore, 'users', currentUser.uid);
+                const userData = {
+                    uid: currentUser.uid,
+                    email: currentUser.email,
+                    displayName: currentUser.displayName,
+                    photoURL: currentUser.photoURL,
+                    lastLogin: serverTimestamp()
+                };
+
+                setDoc(userRef, userData, { merge: true }).catch(() => {
+                    const permissionError = new FirestorePermissionError({
+                        path: userRef.path,
+                        operation: 'update',
+                        requestResourceData: userData,
+                    });
+                    errorEmitter.emit('permission-error', permissionError);
+                });
+            } else {
+                 // If no real user, you could fall back to the mock user or null.
+                 // Setting to null for a more realistic logout behavior.
+                setUser(null);
+            }
+            setLoading(false);
+        });
+
+        return () => unsubscribe();
+    }, []);
 
     const value = { user, loading };
 
@@ -62,11 +99,19 @@ export const useAuth = () => {
     return context;
 };
 
-// Mock the sign-in and sign-out functions since we have a default user.
 export const signInWithGoogle = async () => {
-    console.log("Sign-in is disabled; using default user.");
+    const provider = new GoogleAuthProvider();
+    try {
+        await signInWithPopup(auth, provider);
+    } catch (error) {
+        console.error("Error signing in with Google: ", error);
+    }
 };
 
 export const signOutWithGoogle = async () => {
-    console.log("Sign-out is disabled; using default user.");
+    try {
+        await signOut(auth);
+    } catch (error) {
+        console.error("Error signing out: ", error);
+    }
 };

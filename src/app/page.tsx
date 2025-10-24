@@ -7,11 +7,11 @@ import Dashboard from '@/components/data-sight/dashboard';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { UploadCloud, Loader2, X, Save, FileClock, LogIn, LogOut, Download } from 'lucide-react';
+import { UploadCloud, Loader2, X, Save, FileClock, LogIn, LogOut, Download, Settings } from 'lucide-react';
 import packageJson from '../../package.json';
 import { ThemeToggle } from '@/components/theme-toggle';
 import DataSightLogo from '@/components/data-sight/logo';
-import { SidebarProvider, Sidebar, SidebarTrigger, SidebarContent, SidebarHeader, SidebarInset } from '@/components/ui/sidebar';
+import { SidebarProvider, Sidebar, SidebarTrigger, SidebarContent, SidebarHeader, SidebarInset, SidebarFooter, SidebarMenu, SidebarMenuItem, SidebarMenuButton } from '@/components/ui/sidebar';
 import SavedReports from '@/components/data-sight/saved-reports';
 import { saveReport, getReports, type Report } from '@/lib/reports';
 import { useAuth, signInWithGoogle, signOutWithGoogle } from '@/hooks/use-auth';
@@ -19,6 +19,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
+import Link from 'next/link';
 
 
 // Helper to convert parsed data back to a CSV string
@@ -286,6 +287,8 @@ export default function Home() {
       </DropdownMenu>
     );
   };
+  
+  const isAdmin = user?.email === 'bahman.f.behtash@gmail.com';
 
   return (
     <SidebarProvider>
@@ -304,6 +307,20 @@ export default function Home() {
                 onDeleteReport={fetchReports}
              />
           </SidebarContent>
+          {isAdmin && (
+            <SidebarFooter>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <Link href="/settings" className='w-full'>
+                    <SidebarMenuButton>
+                      <Settings />
+                      Settings
+                    </SidebarMenuButton>
+                  </Link>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarFooter>
+          )}
       </Sidebar>
       <SidebarInset>
         <div className="min-h-screen flex flex-col">
@@ -390,5 +407,3 @@ export default function Home() {
     </SidebarProvider>
   );
 }
-
-    

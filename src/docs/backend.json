@@ -42,13 +42,13 @@
     "providers": ["google.com"]
   },
   "firestore": {
-    "/users/{userId}": {
+    "/users/{uid}": {
       "schema": { "$ref": "#/entities/userProfile" },
-      "description": "Stores user profile information."
+      "description": "Stores user profile information, keyed by user UID."
     },
-    "/users/{userId}/reports/{reportId}": {
+    "/datasight_data/{reportId}": {
       "schema": { "$ref": "#/entities/report" },
-      "description": "Stores user-saved data analysis reports."
+      "description": "Stores user-saved data analysis reports in a central collection."
     }
   }
 }

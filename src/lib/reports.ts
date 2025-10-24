@@ -21,7 +21,7 @@ export const saveReport = async (name: string, csvData: string, userId: string) 
         userId,
     };
 
-    addDoc(reportsCollection, reportData).catch(async (serverError) => {
+    return addDoc(reportsCollection, reportData).catch(async (serverError) => {
         const permissionError = new FirestorePermissionError({
             path: reportsCollection.path,
             operation: 'create',
