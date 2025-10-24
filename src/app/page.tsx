@@ -58,22 +58,17 @@ export default function Home() {
   }, [authLoading, user, router]);
   
   const fetchReports = useCallback(async () => {
-    if (!user) {
-        setReports([]);
-        setIsLoadingReports(false);
-        return;
-    };
-
     setIsLoadingReports(true);
     try {
         const fetchedReports = await getReports();
         setReports(fetchedReports);
     } catch (error) {
         console.error(error);
+        // Error toast is handled by permission error emitter
     } finally {
         setIsLoadingReports(false);
     }
-  }, [user]);
+  }, []);
 
   useEffect(() => {
     if (user) {
@@ -255,12 +250,12 @@ export default function Home() {
     </div>
   );
 
-  const UserProfile = () => {
+  const UserProfileDropdown = () => {
     if (authLoading) {
       return <Loader2 className="h-6 w-6 animate-spin" />;
     }
 
-    if (!user) {
+    if (!user || !userProfile) {
       return (
         <Button variant="outline" asChild>
           <Link href="/login">
@@ -276,9 +271,9 @@ export default function Home() {
         <DropdownMenuTrigger asChild>
            <Button variant="ghost" className="relative h-8 w-8 rounded-full">
             <Avatar className="h-8 w-8">
-              <AvatarImage src={user.photoURL ?? ''} alt={userProfile?.displayName ?? ''} />
+              <AvatarImage src={user.photoURL ?? ''} alt={userProfile.displayName ?? ''} />
               <AvatarFallback>
-                {userProfile?.displayName?.charAt(0).toUpperCase() || user.email?.charAt(0).toUpperCase()}
+                {userProfile.displayName?.charAt(0).toUpperCase() || user.email?.charAt(0).toUpperCase()}
               </AvatarFallback>
             </Avatar>
           </Button>
@@ -286,7 +281,7 @@ export default function Home() {
         <DropdownMenuContent className="w-56" align="end" forceMount>
           <DropdownMenuLabel className="font-normal">
             <div className="flex flex-col space-y-1">
-              <p className="text-sm font-medium leading-none">{userProfile?.displayName || 'User'}</p>
+              <p className="text-sm font-medium leading-none">{userProfile.displayName || 'User'}</p>
               <p className="text-xs leading-none text-muted-foreground">
                 {user.email}
               </p>
@@ -302,7 +297,7 @@ export default function Home() {
     );
   };
   
-  if (authLoading || !user) {
+  if (authLoading || (!user && router.pathname !== '/login')) {
     return (
       <div className="flex h-screen items-center justify-center">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -374,7 +369,7 @@ export default function Home() {
                   </>
                 )}
                 <ThemeToggle />
-                <UserProfile />
+                <UserProfileDropdown />
               </div>
             </div>
           </header>

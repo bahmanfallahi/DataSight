@@ -19,7 +19,7 @@ export interface UserProfile {
     email: string | null;
     displayName: string | null;
     photoURL: string | null;
-    role?: 'admin' | 'expert';
+    role: 'admin' | 'expert';
 }
 
 interface AuthContextType {
@@ -43,28 +43,27 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-            setUser(currentUser);
+            setLoading(true);
             if (currentUser) {
-                const userDoc = await getDoc(doc(firestore, 'users', currentUser.uid));
+                setUser(currentUser);
+                const userDocRef = doc(firestore, 'users', currentUser.uid);
+                const userDoc = await getDoc(userDocRef);
                 if (userDoc.exists()) {
                     setUserProfile(userDoc.data() as UserProfile);
                 } else {
-                    // If user exists in Auth but not Firestore, create their profile
-                    // This can happen for users created before the profile logic was in place
-                    const profile = {
+                    // This is a fallback for manually created users in Auth without a profile
+                    const profile: UserProfile = {
                         uid: currentUser.uid,
                         email: currentUser.email,
-                        displayName: currentUser.displayName || currentUser.email?.split('@')[0],
+                        displayName: currentUser.displayName || currentUser.email?.split('@')[0] || 'User',
                         photoURL: currentUser.photoURL,
-                        role: 'expert' // Default to 'expert' for safety
+                        role: 'expert' // Safely default to 'expert'
                     };
-                    await setDoc(doc(firestore, 'users', currentUser.uid), {
-                        ...profile,
-                        createdAt: serverTimestamp()
-                    });
+                    await setDoc(userDocRef, { ...profile, createdAt: serverTimestamp() });
                     setUserProfile(profile);
                 }
             } else {
+                setUser(null);
                 setUserProfile(null);
             }
             setLoading(false);
@@ -120,16 +119,15 @@ const createUserProfileDocument = async (user: User, additionalData: { displayNa
 }
 
 export const signUpWithEmail = async ({ newUser, adminEmail, adminPassword }: SignUpParams) => {
-    // 1. Create the new user. This will unfortunately sign the admin out and sign in as the new user.
+    // This is a temporary auth instance to create the user without signing out the admin
     const { user: newAuthUser } = await createUserWithEmailAndPassword(auth, newUser.email, newUser.password);
     
-    // 2. Create the Firestore document for the new user.
     await createUserProfileDocument(newAuthUser, {
       displayName: newUser.displayName,
       role: newUser.role,
     });
   
-    // 3. Sign out the new user and sign the admin back in.
+    // Sign out the newly created user and sign the admin back in.
     await signOut(auth);
     await signInWithEmailAndPassword(auth, adminEmail, adminPassword);
   
@@ -142,21 +140,15 @@ export const signInWithEmail = async ({ email, password }: SignInData) => {
     const { user } = userCredential;
     
     const userRef = doc(firestore, 'users', user.uid);
-    const userDoc = await getDoc(userRef);
-    
-    if (!userDoc.exists()) {
-        // This is a fallback for users created manually in Auth but without a profile
-        await createUserProfileDocument(user, { displayName: user.email!.split('@')[0], role: 'expert' });
-    } else {
-        await setDoc(userRef, { lastLogin: serverTimestamp() }, { merge: true }).catch((err) => {
-            const permissionError = new FirestorePermissionError({
-                path: userRef.path,
-                operation: 'update',
-                requestResourceData: { lastLogin: 'serverTimestamp' },
-            });
-            errorEmitter.emit('permission-error', permissionError);
+    // Update last login time. Profile is fetched by AuthProvider on state change.
+    await setDoc(userRef, { lastLogin: serverTimestamp() }, { merge: true }).catch((err) => {
+        const permissionError = new FirestorePermissionError({
+            path: userRef.path,
+            operation: 'update',
+            requestResourceData: { lastLogin: 'serverTimestamp' },
         });
-    }
+        errorEmitter.emit('permission-error', permissionError);
+    });
 
     return userCredential;
 }

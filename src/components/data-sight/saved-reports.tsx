@@ -30,8 +30,7 @@ export default function SavedReports({ reports, isLoading, onSelectReport, onDel
     const [isDeleting, setIsDeleting] = useState<string | null>(null);
     const [reportToDelete, setReportToDelete] = useState<Report | null>(null);
     const { toast } = useToast();
-    const { user } = useAuth();
-
+    
     const isAdmin = userProfile?.role === 'admin';
     
     const handleDeleteClick = (report: Report) => {
@@ -56,10 +55,6 @@ export default function SavedReports({ reports, isLoading, onSelectReport, onDel
             setReportToDelete(null);
         }
     };
-
-    if (!user) {
-        return <p className="p-4 text-sm text-center text-muted-foreground">Please log in to see your reports.</p>
-    }
 
     if (isLoading) {
         return (
