@@ -4,15 +4,13 @@ import * as React from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { useRouter, useSearchParams } from 'next/navigation';
-import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
-import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Eye, EyeOff } from 'lucide-react';
 import { signInWithEmail } from '@/hooks/use-auth';
 
 
@@ -27,6 +25,7 @@ export type SignInData = z.infer<typeof signInSchema>;
 
 export function AuthForm() {
   const [isLoading, setIsLoading] = React.useState(false);
+  const [showPassword, setShowPassword] = React.useState(false);
   const router = useRouter();
   const { toast } = useToast();
 
@@ -92,16 +91,26 @@ export function AuthForm() {
             />
             {errors.email && <p className="text-sm text-destructive">{errors.email.message}</p>}
           </div>
-          <div className="grid gap-1">
+          <div className="grid gap-1 relative">
             <Label htmlFor="password">Password</Label>
             <Input
               id="password"
               placeholder="••••••••"
-              type="password"
+              type={showPassword ? 'text' : 'password'}
               autoComplete='current-password'
               disabled={isLoading}
               {...register('password')}
             />
+            <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="absolute right-1 top-7 h-7 w-7 text-muted-foreground"
+                onClick={() => setShowPassword(prev => !prev)}
+            >
+                {showPassword ? <EyeOff /> : <Eye />}
+                <span className="sr-only">{showPassword ? 'Hide password' : 'Show password'}</span>
+            </Button>
             {errors.password && <p className="text-sm text-destructive">{errors.password.message}</p>}
           </div>
           <Button disabled={isLoading} className="mt-2">
