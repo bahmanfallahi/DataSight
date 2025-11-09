@@ -148,20 +148,30 @@ export const signUpWithEmail = async ({ newUser, adminEmail, adminPassword }: Si
 
 
 export const signInWithEmail = async ({ email, password }: SignInData) => {
-    const userCredential = await signInWithEmailAndPassword(auth, email, password);
-    const { user } = userCredential;
-    
-    const userRef = doc(firestore, 'users', user.uid);
-    await setDoc(userRef, { lastLogin: serverTimestamp() }, { merge: true }).catch((err) => {
-        const permissionError = new FirestorePermissionError({
-            path: userRef.path,
-            operation: 'update',
-            requestResourceData: { lastLogin: 'serverTimestamp' },
+    try {
+        const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        const { user } = userCredential;
+        
+        const userRef = doc(firestore, 'users', user.uid);
+        // This is a fire-and-forget update, but we'll still handle permission errors if they occur
+        setDoc(userRef, { lastLogin: serverTimestamp() }, { merge: true }).catch((err) => {
+            if (err.code === 'permission-denied') {
+                const permissionError = new FirestorePermissionError({
+                    path: userRef.path,
+                    operation: 'update',
+                    requestResourceData: { lastLogin: 'serverTimestamp' },
+                });
+                errorEmitter.emit('permission-error', permissionError);
+            } else {
+                 console.error("Failed to update last login:", err);
+            }
         });
-        errorEmitter.emit('permission-error', permissionError);
-    });
 
-    return userCredential;
+        return userCredential;
+    } catch (error) {
+        // The error will be re-thrown and should be handled by the calling component (AuthForm)
+        throw error;
+    }
 }
 
 

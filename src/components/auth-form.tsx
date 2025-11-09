@@ -48,21 +48,23 @@ export function AuthForm() {
         toast({ title: 'Signed In', description: 'Welcome back!' });
         router.push('/');
     } catch (error: any) {
-      console.error(error);
+      console.error("Sign in failed:", error);
       let description = 'An unexpected error occurred. Please try again.';
+      
+      // Handle specific Firebase error codes
       if (error.code) {
           switch (error.code) {
               case 'auth/invalid-credential':
-                  description = 'Invalid email or password. Please check your credentials.';
-                  break;
               case 'auth/user-not-found':
-                  description = 'No account found with this email.';
-                  break;
               case 'auth/wrong-password':
-                  description = 'Incorrect password. Please try again.';
+                  description = 'Invalid email or password. Please check your credentials and try again.';
+                  break;
+              case 'auth/network-request-failed':
+                  description = 'Could not connect to the authentication service. Please check your internet connection and try again.';
                   break;
           }
       }
+      
       toast({
         variant: 'destructive',
         title: 'Sign In Failed',
