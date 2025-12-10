@@ -45,13 +45,12 @@ export function AuthForm() {
     setIsLoading(true);
     try {
         await signInWithEmail(data);
-        toast({ title: 'Signed In', description: 'Welcome back!' });
-        router.push('/');
+        toast({ title: 'Signed In', description: 'Welcome back! Redirecting to your dashboard...' });
+        router.push('/dashboard');
     } catch (error: any) {
       console.error("Sign in failed:", error);
       let description = 'An unexpected error occurred. Please try again.';
       
-      // Handle specific Firebase error codes
       if (error.code) {
           switch (error.code) {
               case 'auth/invalid-credential':
@@ -110,7 +109,7 @@ export function AuthForm() {
                 className="absolute right-1 top-7 h-7 w-7 text-muted-foreground"
                 onClick={() => setShowPassword(prev => !prev)}
             >
-                {showPassword ? <EyeOff /> : <Eye />}
+                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 <span className="sr-only">{showPassword ? 'Hide password' : 'Show password'}</span>
             </Button>
             {errors.password && <p className="text-sm text-destructive">{errors.password.message}</p>}
