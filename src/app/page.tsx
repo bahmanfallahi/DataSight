@@ -59,7 +59,7 @@ export default function LandingPage() {
       <main className="flex-1 flex items-center">
         <div className="container relative z-10 mx-auto flex flex-col items-center justify-center px-4 text-center py-16 md:py-24">
           <h1 className="text-4xl md:text-6xl lg:text-7xl font-extrabold tracking-tighter !leading-tight">
-            Transform Fiber Optic Sales into Actionable Insights
+            Analyze as much as possible.
           </h1>
           <p className="mt-6 max-w-2xl text-lg text-gray-400">
             Advanced analytics dashboard for monitoring sales, agents, and regional performance in real-time.
