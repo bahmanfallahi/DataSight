@@ -235,6 +235,11 @@ export default function DashboardPage() {
     }
   };
 
+  const handleSignOut = async () => {
+    await signOutUser();
+    router.push('/');
+  };
+
 
   const FileUploader = () => (
     <div className="w-full max-w-2xl mx-auto">
@@ -292,7 +297,7 @@ export default function DashboardPage() {
             </div>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={signOutUser}>
+          <DropdownMenuItem onClick={handleSignOut}>
             <LogOut className="mr-2 h-4 w-4" />
             <span>Log out</span>
           </DropdownMenuItem>
