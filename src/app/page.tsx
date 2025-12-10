@@ -65,7 +65,7 @@ export default function LandingPage() {
             Advanced analytics dashboard for monitoring sales, agents, and regional performance in real-time.
           </p>
           <Button asChild size="lg" className="mt-8 bg-primary/90 text-primary-foreground hover:bg-primary animate-pulse hover:animate-none shadow-[0_0_20px_hsl(var(--primary))]">
-            <Link href="/dashboard">Go to Dashboard</Link>
+            <Link href="/login">Go to Dashboard</Link>
           </Button>
 
           <div className="relative mt-20 md:mt-24 w-full max-w-5xl">
